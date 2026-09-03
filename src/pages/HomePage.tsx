@@ -1,0 +1,136 @@
+import { Link } from 'react-router-dom'
+import PageContainer from '../components/PageContainer'
+
+export default function HomePage() {
+  return (
+    <div className="relative overflow-hidden">
+      {/* Hero 背景：克制的 CSS 图形（山脉剪影） */}
+      <div
+        className="absolute inset-x-0 top-0 h-[58vh] -z-10"
+        aria-hidden="true"
+        style={{
+          background:
+            'linear-gradient(180deg, #e1ebe5 0%, #f3f6f4 55%, #fbf7ef 100%)'
+        }}
+      >
+        <svg
+          className="absolute inset-x-0 bottom-0 w-full"
+          viewBox="0 0 1200 420"
+          preserveAspectRatio="none"
+          style={{ height: '60%' }}
+        >
+          <path
+            d="M0,420 L0,280 L80,240 L160,300 L260,220 L360,290 L470,200 L580,270 L690,230 L800,310 L920,240 L1040,290 L1140,250 L1200,280 L1200,420 Z"
+            fill="#9bbba8"
+            opacity="0.55"
+          />
+          <path
+            d="M0,420 L0,330 L120,290 L220,340 L340,280 L460,330 L580,270 L700,320 L820,280 L940,340 L1060,300 L1200,330 L1200,420 Z"
+            fill="#6e9a83"
+            opacity="0.7"
+          />
+          <path
+            d="M0,420 L0,380 L160,360 L280,380 L420,350 L560,380 L700,355 L860,385 L1020,360 L1200,380 L1200,420 Z"
+            fill="#4f7d67"
+            opacity="0.85"
+          />
+        </svg>
+      </div>
+
+      <PageContainer className="pt-10 sm:pt-14">
+        {/* Hero 文案 */}
+        <section className="pt-10 sm:pt-14 pb-10">
+          <div className="text-xs tracking-[0.4em] text-forest-600 mb-4">
+            SHAN · JIAN
+          </div>
+          <h1 className="font-serif text-5xl sm:text-6xl font-semibold text-forest-900 leading-tight">
+            山 见
+          </h1>
+          <p className="mt-4 text-lg text-forest-700 font-serif">
+            看见风景，也看懂风景。
+          </p>
+          <p className="mt-3 text-sm text-stone2-500 leading-relaxed max-w-sm">
+            一款以武功山为示范场景的智慧文旅体验产品——
+            借助 3D 地图、AR 识山与视域分析，让每一次仰望都更有分量。
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <Link
+              to="/map"
+              className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl2 bg-forest-700 text-white text-sm font-medium hover:bg-forest-800 active:bg-forest-900 transition shadow-soft"
+            >
+              进入武功山
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Link
+              to="/ar"
+              className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl2 border border-forest-200 text-forest-800 text-sm font-medium bg-white/60 hover:bg-white active:bg-forest-50 transition"
+            >
+              快速体验 AR 看山
+            </Link>
+          </div>
+        </section>
+
+        {/* 三个特性 */}
+        <section className="mt-6 grid gap-3 sm:grid-cols-3">
+          <FeatureCard
+            title="3D 地图"
+            desc="基于 CesiumJS 的武功山三维地形与山峰标注。"
+            icon={
+              <path d="M3 11l9-8 9 8-9 8-9-8zM3 11v10h18V11" />
+            }
+          />
+          <FeatureCard
+            title="AR 识山"
+            desc="视线方向内的山峰名称、海拔与距离实时叠加。"
+            icon={
+              <>
+                <rect x="3" y="7" width="18" height="12" rx="2" />
+                <circle cx="12" cy="13" r="3" />
+                <path d="M7 7l-1-3h12l-1 3" />
+              </>
+            }
+          />
+          <FeatureCard
+            title="视域分析"
+            desc="GIS 视角下的可视扇区与剖面——告诉你为什么能看到。"
+            icon={
+              <>
+                <path d="M2 20l10-7 10 7" />
+                <circle cx="12" cy="9" r="4" />
+                <path d="M8 9h8M12 5v8" />
+              </>
+            }
+          />
+        </section>
+
+        {/* 底部说明 */}
+        <section className="mt-10 mb-4 text-center text-xs text-stone2-400 tracking-wider">
+          以武功山为示范场景 · MVP 演示版 · 所有数据均为模拟
+        </section>
+      </PageContainer>
+    </div>
+  )
+}
+
+interface FeatureCardProps {
+  title: string
+  desc: string
+  icon: React.ReactNode
+}
+
+function FeatureCard({ title, desc, icon }: FeatureCardProps) {
+  return (
+    <div className="rounded-xl2 bg-white/70 border border-forest-100 p-4 shadow-soft">
+      <div className="w-9 h-9 rounded-lg bg-forest-700 text-white flex items-center justify-center mb-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {icon}
+        </svg>
+      </div>
+      <div className="text-forest-800 font-medium text-sm mb-1">{title}</div>
+      <div className="text-stone2-500 text-xs leading-relaxed">{desc}</div>
+    </div>
+  )
+}

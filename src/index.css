@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 基础样式：克制、无花哨装饰 */
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 全局滚动条：最小化视觉干扰 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c3d6cb;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 工具类：文字溢出省略 */
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 移动端安全区 */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Cesium 容器样式适配：去除默认边框阴影 */
+.cesium-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cesium-container .cesium-viewer-bottom,
+.cesium-container .cesium-viewer-toolbar,
+.cesium-container .cesium-viewer-animationContainer,
+.cesium-container .cesium-viewer-timelineContainer,
+.cesium-container .cesium-viewer-fullscreenContainer,
+.cesium-container .cesium-viewer-geocoderContainer,
+.cesium-container .cesium-viewer-navigationContainer,
+.cesium-container .cesium-viewer-sceneModePicker,
+.cesium-container .cesium-viewer-baseLayerPickerContainer,
+.cesium-container .cesium-viewer-projectionPicker,
+.cesium-container .cesium-viewer-creditContainer,
+.cesium-container .cesium-viewer-creditsContainer {
+  display: none !important;
+}
