@@ -182,6 +182,25 @@ export function useCamera() {
     }
   }
 
+  /**
+   * 关键修复：当视频元素挂载后（ref 从 null 变成元素），
+   * 如果已经拿到了 stream 但还没绑上 srcObject，在这里重新绑定。
+   * —— 这解决了 setMode('camera') → start() 的竞态问题：
+   *    start() 可能在 video 元素还没渲染出来时就执行完毕，
+   *    导致 streamRef 里有流但 video.srcObject 还是 null → 黑屏。
+   */
+  useEffect(() => {
+    const video = videoRef.current
+    const stream = streamRef.current
+    if (video && stream && video.srcObject !== stream) {
+      video.srcObject = stream
+      // 某些浏览器（iOS Safari）即便 srcObject 已设，仍需显式 play()
+      if (video.paused) {
+        video.play().catch(() => { /* 可能是 autoplay 策略，忽略 */ })
+      }
+    }
+  })
+
   /** 组件卸载时自动清理摄像头资源 */
   useEffect(() => {
     return () => {
