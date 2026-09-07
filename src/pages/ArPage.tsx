@@ -4,6 +4,8 @@ import { defaultUserPosition, getPeakById, getVisiblePeaks } from '../data/mock'
 import ArPeakBadge, { type HeadingKey } from '../components/ArPeakBadge'
 import CameraView from '../components/CameraView'
 import { useCamera } from '../hooks/useCamera'
+import { useGeolocation } from '../hooks/useGeolocation'
+import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 type ArMode = 'simulated' | 'camera'
@@ -24,15 +26,18 @@ export default function ArPage() {
     [currentHeading]
   )
 
-  // 摄像头 hook（在 camera 模式下才会真正启动）
+  // Stage 2: 摄像头
   const camera = useCamera()
+  // Stage 3: GPS + 方向传感器
+  const geo = useGeolocation()
+  const compass = useDeviceOrientation()
 
-  // 离开页面时自动清理摄像头资源
+  // 离开页面时清理所有资源
   useEffect(() => {
     return () => {
-      if (camera.status !== 'idle') {
-        camera.stop()
-      }
+      camera.stop()
+      geo.stop()
+      compass.stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -60,14 +65,20 @@ export default function ArPage() {
             onStop={handleExitCamera}
           />
 
-          {/* AR Overlay 层：山峰标签叠加在摄像头画面上方 */}
+          {/* AR Overlay 层：摄像头画面上叠加山峰 + 状态 */}
           {camera.status === 'streaming' && (
             <>
-              {/* 方位刻度顶栏 */}
-              <div className="pointer-events-none absolute top-0 left-0 right-0 h-10 flex items-end justify-between px-4 pb-1 text-white/90 text-[11px] tracking-widest bg-gradient-to-b from-black/50 to-transparent">
-                <span className="text-white/70">◀ {leftAz(currentHeading - 60)}</span>
-                <span className="text-sand-200">▲ {az(currentHeading)}</span>
-                <span className="text-white/70">{rightAz(currentHeading + 60)} ▶</span>
+              {/* 顶部：📍 GPS + 🧭 方向 状态 + 方位刻度 */}
+              <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-3 pb-2 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent">
+                {/* 左侧：GPS + Compass 状态 */}
+                <div className="pointer-events-auto flex flex-col gap-1.5">
+                  <GeoStatusChip geo={geo} onRequest={geo.startWatching} onStop={geo.stop} />
+                  <CompassStatusChip compass={compass} onRequest={compass.start} onStop={compass.stop} />
+                </div>
+                {/* 右侧：方位刻度（原功能） */}
+                <div className="pointer-events-none flex items-center gap-3 text-white/80 text-[11px] tracking-widest pt-1">
+                  <span>{az(currentHeading)}</span>
+                </div>
               </div>
 
               {/* 十字准星 */}
@@ -79,7 +90,7 @@ export default function ArPage() {
                 </div>
               </div>
 
-              {/* 山峰 Badge：位置逻辑与模拟取景器完全相同 */}
+              {/* 山峰 Badge */}
               <div className="pointer-events-none absolute inset-0">
                 {visible.map((v) => {
                   const peak = getPeakById(v.peakId)
@@ -103,9 +114,9 @@ export default function ArPage() {
                 })}
               </div>
 
-              {/* 底部操作栏：全屏时也可切换视角 / 调试信息 */}
+              {/* 底部：视角切换按钮 + 关闭 */}
               <div className="absolute left-0 right-0 bottom-0 px-4 pt-3 pb-safe bg-gradient-to-t from-black/60 to-transparent">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex flex-wrap gap-1.5">
                     {(['N', 'E', 'S', 'W', 'SW'] as HeadingKey[]).map((k) => (
                       <button
@@ -122,9 +133,7 @@ export default function ArPage() {
                       </button>
                     ))}
                   </div>
-
-                  {/* 开发调试信息（仅 dev 环境显示） */}
-                  {import.meta.env.DEV && <DevChip isMobile={isMobile} camera={camera} />}
+                  {import.meta.env.DEV && <DevPanel camera={camera} geo={geo} compass={compass} isMobile={isMobile} />}
                 </div>
               </div>
             </>
@@ -136,7 +145,7 @@ export default function ArPage() {
       {mode === 'simulated' && (
         <div className="max-w-3xl mx-auto px-3 py-4 sm:py-6">
           {/* 顶部状态栏 */}
-          <div className="flex items-center justify-between px-2 pb-3">
+          <div className="flex items-center justify-between px-2 pb-3 flex-wrap gap-2">
             <div>
               <div className="text-xs text-stone2-400">
                 模拟摄像头 · {defaultUserPosition.name}
@@ -145,7 +154,10 @@ export default function ArPage() {
                 AR 看山 · 朝向 {labelOf(heading)}
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
+            {/* 正式 UI 上的 📍 🧭 状态 */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <GeoStatusChip geo={geo} onRequest={geo.startWatching} onStop={geo.stop} compact />
+              <CompassStatusChip compass={compass} onRequest={compass.start} onStop={compass.stop} compact />
               <span className="inline-flex items-center gap-1 rounded-full bg-forest-700/10 text-forest-700 text-[10px] px-2 py-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-forest-600" />
                 DEMO
@@ -161,7 +173,6 @@ export default function ArPage() {
             aria-label="模拟 AR 摄像头画面"
             data-testid="ar-viewfinder"
           >
-            {/* 背景画面：克制的山景渐变模拟 */}
             <div
               className="absolute inset-0"
               style={{
@@ -177,7 +188,6 @@ export default function ArPage() {
               </svg>
             </div>
 
-            {/* 十字准星 */}
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <div className="relative w-20 h-20">
                 <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/70" />
@@ -186,14 +196,12 @@ export default function ArPage() {
               </div>
             </div>
 
-            {/* 方位刻度顶栏 */}
             <div className="pointer-events-none absolute top-0 left-0 right-0 h-10 flex items-end justify-between px-4 pb-1 text-white/90 text-[11px] tracking-widest bg-gradient-to-b from-black/40 to-transparent">
               <span>◀ {leftAz(currentHeading - 60)}</span>
               <span className="text-sand-200">▲ {az(currentHeading)}</span>
               <span>{rightAz(currentHeading + 60)} ▶</span>
             </div>
 
-            {/* 山峰 Badge */}
             {visible.map((v) => {
               const peak = getPeakById(v.peakId)
               if (!peak) return null
@@ -214,7 +222,6 @@ export default function ArPage() {
               )
             })}
 
-            {/* 底部取景提示 + 进入真实摄像头按钮 */}
             <div className="absolute left-0 right-0 bottom-0 h-14 px-4 flex items-center justify-between bg-gradient-to-t from-black/60 to-transparent">
               <span className="text-white/85 text-[11px]">
                 共 {visible.length} 座山峰可见
@@ -233,40 +240,68 @@ export default function ArPage() {
             </div>
           </div>
 
-          {/* 视角切换 */}
-          <div className="mt-4 flex items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1.5">
-              {(['N', 'E', 'S', 'W', 'SW'] as HeadingKey[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setHeading(k)}
-                  className={`h-9 sm:h-8 px-3 rounded-full text-xs border transition ${
-                    heading === k
-                      ? 'bg-forest-700 text-white border-forest-700'
-                      : 'bg-white text-forest-700 border-forest-200 hover:bg-forest-50'
-                  }`}
-                >
-                  {labelOf(k)}
-                </button>
-              ))}
+          {/* 方位切换 + GPS + 方向按钮 */}
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-1.5">
+                {(['N', 'E', 'S', 'W', 'SW'] as HeadingKey[]).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setHeading(k)}
+                    className={`h-9 sm:h-8 px-3 rounded-full text-xs border transition ${
+                      heading === k
+                        ? 'bg-forest-700 text-white border-forest-700'
+                        : 'bg-white text-forest-700 border-forest-200 hover:bg-forest-50'
+                    }`}
+                  >
+                    {labelOf(k)}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/viewshed')}
+                className="text-xs text-forest-600 hover:text-forest-800 whitespace-nowrap"
+              >
+                视域分析 →
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/viewshed')}
-              className="text-xs text-forest-600 hover:text-forest-800 whitespace-nowrap"
-            >
-              视域分析 →
-            </button>
+
+            {/* Stage 3 空间感知按钮组 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <SensingButton
+                label={geo.status === 'watching' ? '📍 停止定位' : '📍 获取我的位置'}
+                active={geo.status === 'watching'}
+                loading={geo.status === 'requesting'}
+                onClick={() => {
+                  if (geo.status === 'watching') geo.stop()
+                  else geo.startWatching()
+                }}
+              />
+              <SensingButton
+                label={compass.status === 'listening' ? '🧭 停止方向感知' : '🧭 开启方向感知'}
+                active={compass.status === 'listening'}
+                loading={compass.status === 'requesting'}
+                onClick={() => {
+                  if (compass.status === 'listening') compass.stop()
+                  else compass.start()
+                }}
+              />
+            </div>
           </div>
 
-          {/* 电脑端提示（仅桌面端） */}
+          {/* 调试面板（仅 dev） */}
+          {import.meta.env.DEV && (
+            <DebugPanel geo={geo} compass={compass} />
+          )}
+
           {!isMobile && (
             <div className="mt-4 rounded-lg bg-forest-50 border border-forest-100 p-3 text-[11px] text-forest-700 leading-relaxed">
               <div className="font-medium mb-1 text-forest-800">💡 提示</div>
-              <div>真实摄像头功能需要在手机上体验（同一局域网访问）。</div>
+              <div>真实摄像头 / GPS / 方向传感器功能建议在手机上体验（同一 Wi-Fi + HTTPS 访问）。</div>
               <div className="mt-1">
-                开发面板已显示局域网地址，手机连接同一 Wi-Fi 后输入该地址即可进入本页面并点击"打开摄像头"。
+                Stage 3 仅采集真实空间数据，山峰标签仍使用模拟位置 — Stage 4 才会根据真实 heading 让山峰跟随手机移动。
               </div>
             </div>
           )}
@@ -276,19 +311,258 @@ export default function ArPage() {
   )
 }
 
-/** 开发调试小标签（仅 dev） */
-function DevChip({ isMobile, camera }: { isMobile: boolean; camera: ReturnType<typeof useCamera> }) {
-  const statusLabel: Record<string, string> = {
-    idle: '待机', requesting: '请求中', streaming: '实时', denied: '已拒绝', unsupported: '不支持', error: '错误'
-  }
+/* ========= 子组件 ========= */
+
+/** 空间感知主按钮（获取位置 / 开启方向感知） */
+function SensingButton({
+  label,
+  active,
+  loading,
+  onClick
+}: {
+  label: string
+  active: boolean
+  loading: boolean
+  onClick: () => void
+}) {
   return (
-    <div className="flex flex-col items-end gap-0.5 text-white/60 text-[9px] leading-tight font-mono">
-      <span>Camera · {statusLabel[camera.status] ?? camera.status}</span>
-      <span>Device · {isMobile ? 'Mobile' : 'Desktop'}</span>
-      <span>Secure · {camera.isSecureContext ? 'YES' : 'NO'}</span>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-xs border transition ${
+        active
+          ? 'bg-forest-700 text-white border-forest-700 font-medium'
+          : 'bg-white text-forest-700 border-forest-200 hover:bg-forest-50'
+      } ${loading ? 'opacity-60 pointer-events-none' : ''}`}
+    >
+      {loading && <span className="w-2.5 h-2.5 rounded-full border-2 border-current border-t-transparent animate-spin" />}
+      {label}
+    </button>
+  )
+}
+
+/** 正式 UI — GPS 状态 chip */
+function GeoStatusChip({
+  geo,
+  onRequest,
+  onStop,
+  compact
+}: {
+  geo: ReturnType<typeof useGeolocation>
+  onRequest: () => void
+  onStop: () => void
+  compact?: boolean
+}) {
+  if (geo.status === 'watching' && geo.reading) {
+    const acc = geo.reading.accuracy
+    const accLabel = acc < 20 ? `精度 好` : acc < 100 ? `精度 ${Math.round(acc)}m` : `精度 ${Math.round(acc)}m · 建议开阔区`
+    return (
+      <button
+        type="button"
+        onClick={onStop}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-forest-700/15 text-forest-800 border border-forest-200 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-forest-700/25 transition`}
+        title={accLabel}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-forest-600 animate-pulse" />
+        📍 GPS 已定位
+      </button>
+    )
+  }
+  if (geo.status === 'denied') {
+    return (
+      <button
+        type="button"
+        onClick={onRequest}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
+      >
+        📍 点此定位
+      </button>
+    )
+  }
+  if (geo.status === 'requesting') {
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full bg-white/10 text-white/70 border border-white/20 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'}`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-sand-300 animate-pulse" />
+        📍 定位中…
+      </span>
+    )
+  }
+  return null // idle 或 error 时不显示 chip（按钮组里有主按钮）
+}
+
+/** 正式 UI — 方向状态 chip */
+function CompassStatusChip({
+  compass,
+  onRequest,
+  onStop,
+  compact
+}: {
+  compass: ReturnType<typeof useDeviceOrientation>
+  onRequest: () => void
+  onStop: () => void
+  compact?: boolean
+}) {
+  if (compass.status === 'listening' && compass.reading) {
+    return (
+      <button
+        type="button"
+        onClick={onStop}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-forest-700/15 text-forest-800 border border-forest-200 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-forest-700/25 transition`}
+        title={`真实朝向 ${Math.round(compass.reading.heading)}°`}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-forest-600 animate-pulse" />
+        🧭 {Math.round(compass.reading.heading)}°
+      </button>
+    )
+  }
+  if (compass.status === 'denied') {
+    return (
+      <button
+        type="button"
+        onClick={onRequest}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
+      >
+        🧭 点此开启
+      </button>
+    )
+  }
+  if (compass.status === 'requesting') {
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full bg-white/10 text-white/70 border border-white/20 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'}`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-sand-300 animate-pulse" />
+        🧭 请在弹窗中允许
+      </span>
+    )
+  }
+  return null
+}
+
+/** 开发环境 GPS + 方向 调试面板（模拟模式下） */
+function DebugPanel({
+  geo,
+  compass
+}: {
+  geo: ReturnType<typeof useGeolocation>
+  compass: ReturnType<typeof useDeviceOrientation>
+}) {
+  return (
+    <div className="mt-4 rounded-xl bg-white border border-forest-100 p-3 text-[11px]">
+      <div className="text-[10px] text-forest-500 font-medium mb-2 tracking-wide">
+        🧪 开发调试面板（DEV ONLY）
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {/* GPS 区块 */}
+        <div>
+          <div className="text-[10px] text-stone2-400 mb-1">📍 GPS</div>
+          <div className="font-mono leading-tight text-forest-800">
+            <Line label="状态" value={geo.status} />
+            {geo.reading && (
+              <>
+                <Line label="纬度" value={geo.reading.latitude.toFixed(6)} />
+                <Line label="经度" value={geo.reading.longitude.toFixed(6)} />
+                <Line label="精度" value={`${Math.round(geo.reading.accuracy)}m`} />
+                {geo.reading.altitude != null && (
+                  <Line label="海拔" value={`${Math.round(geo.reading.altitude)}m`} />
+                )}
+              </>
+            )}
+            {geo.error && <Line label="错误" value={geo.error.code} />}
+          </div>
+        </div>
+        {/* Compass 区块 */}
+        <div>
+          <div className="text-[10px] text-stone2-400 mb-1">🧭 方向传感器</div>
+          <div className="font-mono leading-tight text-forest-800">
+            <Line label="状态" value={compass.status} />
+            <Line label="iOS 授权" value={compass.needsManualPermission ? 'YES' : 'NO'} />
+            {compass.reading && (
+              <>
+                <Line label="Heading" value={`${Math.round(compass.reading.heading)}°`} />
+                <Line label="Alpha" value={compass.reading.alpha?.toFixed(1) ?? '—'} />
+                <Line label="Beta" value={compass.reading.beta?.toFixed(1) ?? '—'} />
+                <Line label="Gamma" value={compass.reading.gamma?.toFixed(1) ?? '—'} />
+              </>
+            )}
+            {compass.error && <Line label="错误" value={compass.error.code} />}
+          </div>
+        </div>
+      </div>
+
+      {/* 简易指南针可视化 */}
+      {compass.reading && (
+        <div className="mt-3 pt-3 border-t border-forest-100 flex items-center justify-center">
+          <CompassVisual heading={compass.reading.heading} />
+        </div>
+      )}
     </div>
   )
 }
+
+function Line({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex justify-between gap-3">
+      <span className="text-stone2-400">{label}</span>
+      <span className="text-right">{value}</span>
+    </div>
+  )
+}
+
+/** 简易指南针可视化 —— 圆形 + 箭头 + 方位 */
+function CompassVisual({ heading }: { heading: number }) {
+  const dir = headingToDirection(heading)
+  return (
+    <div className="relative w-24 h-24 rounded-full bg-forest-50 border border-forest-200 flex items-center justify-center">
+      {/* 方位文字 */}
+      <span className="absolute top-1 text-[10px] text-forest-600">N</span>
+      <span className="absolute bottom-1 text-[10px] text-forest-600">S</span>
+      <span className="absolute left-1 text-[10px] text-forest-600">W</span>
+      <span className="absolute right-1 text-[10px] text-forest-600">E</span>
+      {/* 箭头 */}
+      <div
+        className="absolute inset-2 flex items-center justify-center transition-transform duration-100"
+        style={{ transform: `rotate(${heading}deg)` }}
+      >
+        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[22px] border-l-transparent border-r-transparent border-b-sand-500" />
+      </div>
+      {/* 中心数字 */}
+      <span className="relative z-10 text-xs font-bold text-forest-800 font-mono">
+        {Math.round(heading)}°
+      </span>
+      {/* 方位 */}
+      <span className="absolute bottom-4 text-[9px] text-forest-600 font-medium">{dir}</span>
+    </div>
+  )
+}
+
+function headingToDirection(heading: number): string {
+  const idx = Math.round(((heading % 360) + 360) % 360 / 45) % 8
+  return ['北', '东北', '东', '东南', '南', '西南', '西', '西北'][idx]
+}
+
+/** 摄像头模式底部的 dev 小面板（空间状态一行） */
+function DevPanel({
+  camera,
+  geo,
+  compass,
+  isMobile
+}: {
+  camera: ReturnType<typeof useCamera>
+  geo: ReturnType<typeof useGeolocation>
+  compass: ReturnType<typeof useDeviceOrientation>
+  isMobile: boolean
+}) {
+  return (
+    <div className="flex flex-col items-end gap-0.5 text-white/60 text-[9px] leading-tight font-mono text-right">
+      <span>📷 {camera.status}</span>
+      <span>📍 {geo.status === 'watching' && geo.reading ? `${geo.reading.latitude.toFixed(4)}, ${geo.reading.longitude.toFixed(4)}` : geo.status}</span>
+      <span>🧭 {compass.status === 'listening' && compass.reading ? `${Math.round(compass.reading.heading)}°` : compass.status}</span>
+      <span>Device · {isMobile ? 'Mobile' : 'Desktop'}</span>
+    </div>
+  )
+}
+
+/* ========= 工具函数 ========= */
 
 function labelOf(h: HeadingKey | string): string {
   const map: Record<string, string> = {
