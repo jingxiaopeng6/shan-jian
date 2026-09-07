@@ -17,18 +17,21 @@ export default function DevHint() {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const localUrl = `http://localhost:${DEV_PORT}`
+  // 自动检测当前协议——HTTPS 模式下 Dev Server 会用 https，否则 http
+  const proto = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https' : 'http'
+
+  const localUrl = `${proto}://localhost:${DEV_PORT}`
   const lanIp = state.status === 'found' ? state.lanIp : null
   const publicIp = 'publicIp' in state ? state.publicIp : undefined
-  const lanUrl = lanIp ? `http://${lanIp}:${DEV_PORT}` : null
+  const lanUrl = lanIp ? `${proto}://${lanIp}:${DEV_PORT}` : null
   // 二维码：优先局域网，回退公网
-  const qrTarget = lanUrl ?? (publicIp ? `http://${publicIp}:${DEV_PORT}` : null)
+  const qrTarget = lanUrl ?? (publicIp ? `${proto}://${publicIp}:${DEV_PORT}` : null)
   const qrSrc = qrTarget
     ? `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=8&data=${encodeURIComponent(qrTarget)}`
     : null
 
   const handleCopy = async () => {
-    const target = lanUrl ?? (publicIp ? `http://${publicIp}:${DEV_PORT}` : null)
+    const target = lanUrl ?? (publicIp ? `${proto}://${publicIp}:${DEV_PORT}` : null)
     if (!target) return
     try {
       await navigator.clipboard.writeText(target)

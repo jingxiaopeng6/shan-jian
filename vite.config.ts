@@ -1,16 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import cesium from 'vite-plugin-cesium'
+import fs from 'node:fs'
+import path from 'node:path'
 
-// https://vitejs.dev/config/
+// 自签名证书：用于 HTTPS Dev Server，使局域网手机能通过安全上下文访问摄像头
+// 证书由 node scripts/gen-certs.mjs 生成（覆盖 localhost + 局域网 IP）
+const certsDir = path.resolve(__dirname, '.certs')
+const hasCerts = fs.existsSync(path.join(certsDir, 'cert.pem')) &&
+  fs.existsSync(path.join(certsDir, 'key.pem'))
+
 export default defineConfig({
   plugins: [react(), cesium()],
   server: {
-    // 绑定 0.0.0.0 使同一局域网下的手机可通过电脑 IP 访问开发服务器
     host: '0.0.0.0',
     port: 5173,
-    // 允许局域网访问（Vite 默认允许，显式声明以明确意图）
     strictPort: false,
-    cors: true
-  }
+    cors: true,
+    // HTTPS —— 仅当证书存在时启用；无证书则自然降级为 HTTP
+    // （TypeScript 类型不接受 false，所以用条件展开 + as any 规避严格类型）
+    ...(hasCerts
+      ? {
+          https: {
+            cert: fs.readFileSync(path.join(certsDir, 'cert.pem')),
+            key: fs.readFileSync(path.join(certsDir, 'key.pem'))
+          }
+        }
+      : {})
+  } as any
 })

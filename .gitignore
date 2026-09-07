@@ -28,3 +28,10 @@ coverage
 
 # TypeScript build info
 *.tsbuildinfo
+
+# 自签名证书（含本机 IP）
+.certs/
+
+# 本地 env 覆盖
+.env.*
+!.env.example
