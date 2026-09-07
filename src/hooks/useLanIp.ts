@@ -18,6 +18,13 @@ export function useLanIp(): IpState {
   useEffect(() => {
     if (!import.meta.env.DEV) return
 
+    // 优先级 0：Vite 环境变量覆盖（最可靠，手动指定）
+    const manualIp = import.meta.env.VITE_LAN_IP?.trim()
+    if (manualIp && /^\d{1,3}(\.\d{1,3}){3}$/.test(manualIp)) {
+      setState({ status: 'found', lanIp: manualIp })
+      return
+    }
+
     let lanIp: string | null = null
     let publicIp: string | undefined
     let lanResolved = false
