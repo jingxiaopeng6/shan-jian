@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { defaultUserPosition, getPeakById, getVisiblePeaks } from '../data/mock'
 import ArPeakBadge, { type HeadingKey } from '../components/ArPeakBadge'
 import CameraView from '../components/CameraView'
+import SpatialTestPanel from '../components/SpatialTestPanel'
 import { useCamera } from '../hooks/useCamera'
-import { useGeolocation } from '../hooks/useGeolocation'
-import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
+import { useLocationProvider } from '../hooks/useLocationProvider'
+import { useOrientationProvider } from '../hooks/useOrientationProvider'
 import { useArPeakOverlay } from '../hooks/useArPeakOverlay'
 import { useIsMobile } from '../hooks/useIsMobile'
-import type { LatLng } from '../utils/geoUtils'
+import type { Peak } from '../types'
 
 type ArMode = 'simulated' | 'camera'
 
@@ -30,27 +31,28 @@ export default function ArPage() {
 
   // Stage 2: 摄像头
   const camera = useCamera()
-  // Stage 3: GPS + 方向传感器
-  const geo = useGeolocation()
-  const compass = useDeviceOrientation()
 
-  // Stage 4: 真实 AR 山峰定位（GPS + heading → 屏幕 X）
-  const userLatLng: LatLng | null = geo.reading
-    ? { lat: geo.reading.latitude, lng: geo.reading.longitude }
-    : null
-  const realHeading = compass.status === 'listening' && compass.reading
-    ? compass.reading.heading
-    : null
-  const overlay = useArPeakOverlay({ userLatLng, heading: realHeading })
-  // 是否具备 Stage 4 真实 AR 渲染条件
-  const hasRealAR = userLatLng != null && realHeading != null && overlay.items.length > 0
+  // Stage 4 空间数据 Provider（支持 Real ↔ Mock 切换）
+  const location = useLocationProvider()
+  const orientation = useOrientationProvider()
+
+  // 当前使用的山峰数据源（测试面板可切换：'real' | Peak[]）
+  const [overlayPeaks, setOverlayPeaks] = useState<Peak[] | 'real'>('real')
+
+  // Stage 4 AR 山峰定位：使用 Provider 统一输出
+  const overlay = useArPeakOverlay({
+    userLatLng: location.latLng,
+    heading: orientation.heading,
+    peaks: overlayPeaks === 'real' ? undefined : overlayPeaks
+  })
+  const hasRealAR = location.latLng != null && orientation.heading != null && overlay.items.length > 0
 
   // 离开页面时清理所有资源
   useEffect(() => {
     return () => {
       camera.stop()
-      geo.stop()
-      compass.stop()
+      location.stop()
+      orientation.stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -85,8 +87,8 @@ export default function ArPage() {
               <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-3 pb-2 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent">
                 {/* 左侧：GPS + Compass 状态 */}
                 <div className="pointer-events-auto flex flex-col gap-1.5">
-                  <GeoStatusChip geo={geo} onRequest={geo.startWatching} onStop={geo.stop} />
-                  <CompassStatusChip compass={compass} onRequest={compass.start} onStop={compass.stop} />
+                  <GeoStatusChip location={location} />
+                  <CompassStatusChip orientation={orientation} />
                 </div>
                 {/* 右侧：方位刻度（原功能） */}
                 <div className="pointer-events-none flex items-center gap-3 text-white/80 text-[11px] tracking-widest pt-1">
@@ -156,7 +158,7 @@ export default function ArPage() {
                       </button>
                     ))}
                   </div>
-                  {import.meta.env.DEV && <DevPanel camera={camera} geo={geo} compass={compass} isMobile={isMobile} />}
+                  {import.meta.env.DEV && <DevPanel camera={camera} location={location} orientation={orientation} isMobile={isMobile} />}
                 </div>
               </div>
             </>
@@ -179,8 +181,8 @@ export default function ArPage() {
             </div>
             {/* 正式 UI 上的 📍 🧭 状态 */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <GeoStatusChip geo={geo} onRequest={geo.startWatching} onStop={geo.stop} compact />
-              <CompassStatusChip compass={compass} onRequest={compass.start} onStop={compass.stop} compact />
+              <GeoStatusChip location={location} compact />
+              <CompassStatusChip orientation={orientation} compact />
               <span className="inline-flex items-center gap-1 rounded-full bg-forest-700/10 text-forest-700 text-[10px] px-2 py-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-forest-600" />
                 DEMO
@@ -294,29 +296,32 @@ export default function ArPage() {
             {/* Stage 3 空间感知按钮组 */}
             <div className="flex items-center gap-2 flex-wrap">
               <SensingButton
-                label={geo.status === 'watching' ? '📍 停止定位' : '📍 获取我的位置'}
-                active={geo.status === 'watching'}
-                loading={geo.status === 'requesting'}
+                label={location.status === 'watching' ? '📍 停止定位' : '📍 获取我的位置'}
+                active={location.status === 'watching'}
+                loading={location.status === 'requesting'}
                 onClick={() => {
-                  if (geo.status === 'watching') geo.stop()
-                  else geo.startWatching()
+                  if (location.status === 'watching') location.stop()
+                  else location.start()
                 }}
               />
               <SensingButton
-                label={compass.status === 'listening' ? '🧭 停止方向感知' : '🧭 开启方向感知'}
-                active={compass.status === 'listening'}
-                loading={compass.status === 'requesting'}
+                label={orientation.status === 'listening' ? '🧭 停止方向感知' : '🧭 开启方向感知'}
+                active={orientation.status === 'listening'}
+                loading={orientation.status === 'requesting'}
                 onClick={() => {
-                  if (compass.status === 'listening') compass.stop()
-                  else compass.start()
+                  if (orientation.status === 'listening') orientation.stop()
+                  else orientation.start()
                 }}
               />
             </div>
           </div>
 
-          {/* 调试面板（仅 dev） */}
+          {/* 调试面板 + 空间模拟测试（仅 dev） */}
           {import.meta.env.DEV && (
-            <DebugPanel geo={geo} compass={compass} overlay={overlay} hasRealAR={hasRealAR} />
+            <>
+              <DebugPanel location={location} orientation={orientation} overlay={overlay} hasRealAR={hasRealAR} />
+              <SpatialTestPanel location={location} orientation={orientation} onPeaksChange={setOverlayPeaks} />
+            </>
           )}
 
           {!isMobile && (
@@ -365,111 +370,83 @@ function SensingButton({
   )
 }
 
-/** 正式 UI — GPS 状态 chip */
+/** 正式 UI — GPS 状态 chip（接收 LocationProvider） */
 function GeoStatusChip({
-  geo,
-  onRequest,
-  onStop,
+  location,
   compact
 }: {
-  geo: ReturnType<typeof useGeolocation>
-  onRequest: () => void
-  onStop: () => void
+  location: ReturnType<typeof useLocationProvider>
   compact?: boolean
 }) {
-  if (geo.status === 'watching' && geo.reading) {
-    const acc = geo.reading.accuracy
-    const accLabel = acc < 20 ? `精度 好` : acc < 100 ? `精度 ${Math.round(acc)}m` : `精度 ${Math.round(acc)}m · 建议开阔区`
+  const isActive = location.latLng != null && (location.status === 'watching' || location.status === 'mock')
+  if (isActive) {
+    const acc = location.accuracy ?? 5
+    const label = location.isMock ? '📍 模拟位置' : '📍 GPS 已定位'
     return (
       <button
         type="button"
-        onClick={onStop}
+        onClick={() => location.stop()}
         className={`inline-flex items-center gap-1.5 rounded-full bg-forest-700/15 text-forest-800 border border-forest-200 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-forest-700/25 transition`}
-        title={accLabel}
+        title={`精度 ${Math.round(acc)}m`}
       >
         <span className="w-1.5 h-1.5 rounded-full bg-forest-600 animate-pulse" />
-        📍 GPS 已定位
+        {label}
       </button>
     )
   }
-  if (geo.status === 'denied') {
-    return (
-      <button
-        type="button"
-        onClick={onRequest}
-        className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
-      >
-        📍 点此定位
-      </button>
-    )
-  }
-  if (geo.status === 'requesting') {
-    return (
-      <span className={`inline-flex items-center gap-1.5 rounded-full bg-white/10 text-white/70 border border-white/20 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'}`}>
-        <span className="w-1.5 h-1.5 rounded-full bg-sand-300 animate-pulse" />
-        📍 定位中…
-      </span>
-    )
-  }
-  return null // idle 或 error 时不显示 chip（按钮组里有主按钮）
+  return (
+    <button
+      type="button"
+      onClick={() => location.start()}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
+    >
+      📍 点此定位
+    </button>
+  )
 }
 
-/** 正式 UI — 方向状态 chip */
+/** 正式 UI — 方向状态 chip（接收 OrientationProvider） */
 function CompassStatusChip({
-  compass,
-  onRequest,
-  onStop,
+  orientation,
   compact
 }: {
-  compass: ReturnType<typeof useDeviceOrientation>
-  onRequest: () => void
-  onStop: () => void
+  orientation: ReturnType<typeof useOrientationProvider>
   compact?: boolean
 }) {
-  if (compass.status === 'listening' && compass.reading) {
+  if (orientation.heading != null) {
+    const label = orientation.isMock ? '🧭 (模拟) ' : '🧭 '
     return (
       <button
         type="button"
-        onClick={onStop}
+        onClick={() => orientation.stop()}
         className={`inline-flex items-center gap-1.5 rounded-full bg-forest-700/15 text-forest-800 border border-forest-200 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-forest-700/25 transition`}
-        title={`真实朝向 ${Math.round(compass.reading.heading)}°`}
+        title={`朝向 ${Math.round(orientation.heading)}°`}
       >
         <span className="w-1.5 h-1.5 rounded-full bg-forest-600 animate-pulse" />
-        🧭 {Math.round(compass.reading.heading)}°
+        {label}{Math.round(orientation.heading)}°
       </button>
     )
   }
-  if (compass.status === 'denied') {
-    return (
-      <button
-        type="button"
-        onClick={onRequest}
-        className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
-      >
-        🧭 点此开启
-      </button>
-    )
-  }
-  if (compass.status === 'requesting') {
-    return (
-      <span className={`inline-flex items-center gap-1.5 rounded-full bg-white/10 text-white/70 border border-white/20 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'}`}>
-        <span className="w-1.5 h-1.5 rounded-full bg-sand-300 animate-pulse" />
-        🧭 请在弹窗中允许
-      </span>
-    )
-  }
-  return null
+  return (
+    <button
+      type="button"
+      onClick={() => orientation.start()}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
+    >
+      🧭 点此开启
+    </button>
+  )
 }
 
-/** 开发环境 GPS + 方向 + Stage 4 AR 调试面板（模拟模式下） */
+/** 开发调试面板（接收 Provider） */
 function DebugPanel({
-  geo,
-  compass,
+  location,
+  orientation,
   overlay,
   hasRealAR
 }: {
-  geo: ReturnType<typeof useGeolocation>
-  compass: ReturnType<typeof useDeviceOrientation>
+  location: ReturnType<typeof useLocationProvider>
+  orientation: ReturnType<typeof useOrientationProvider>
   overlay: ReturnType<typeof useArPeakOverlay>
   hasRealAR: boolean
 }) {
@@ -481,37 +458,30 @@ function DebugPanel({
       <div className="grid grid-cols-2 gap-3">
         {/* GPS 区块 */}
         <div>
-          <div className="text-[10px] text-stone2-400 mb-1">📍 GPS</div>
+          <div className="text-[10px] text-stone2-400 mb-1">📍 GPS{location.isMock ? ' (模拟)' : ''}</div>
           <div className="font-mono leading-tight text-forest-800">
-            <Line label="状态" value={geo.status} />
-            {geo.reading && (
+            <Line label="状态" value={location.status} />
+            {location.latLng && (
               <>
-                <Line label="纬度" value={geo.reading.latitude.toFixed(6)} />
-                <Line label="经度" value={geo.reading.longitude.toFixed(6)} />
-                <Line label="精度" value={`${Math.round(geo.reading.accuracy)}m`} />
-                {geo.reading.altitude != null && (
-                  <Line label="海拔" value={`${Math.round(geo.reading.altitude)}m`} />
+                <Line label="纬度" value={location.latLng.lat.toFixed(6)} />
+                <Line label="经度" value={location.latLng.lng.toFixed(6)} />
+                <Line label="精度" value={`${Math.round(location.accuracy ?? 5)}m`} />
+                {location.altitude != null && (
+                  <Line label="海拔" value={`${Math.round(location.altitude)}m`} />
                 )}
               </>
             )}
-            {geo.error && <Line label="错误" value={geo.error.code} />}
           </div>
         </div>
         {/* Compass 区块 */}
         <div>
-          <div className="text-[10px] text-stone2-400 mb-1">🧭 方向传感器</div>
+          <div className="text-[10px] text-stone2-400 mb-1">🧭 方向传感器{orientation.isMock ? ' (模拟)' : ''}</div>
           <div className="font-mono leading-tight text-forest-800">
-            <Line label="状态" value={compass.status} />
-            <Line label="iOS 授权" value={compass.needsManualPermission ? 'YES' : 'NO'} />
-            {compass.reading && (
-              <>
-                <Line label="Heading" value={`${Math.round(compass.reading.heading)}°`} />
-                <Line label="Alpha" value={compass.reading.alpha?.toFixed(1) ?? '—'} />
-                <Line label="Beta" value={compass.reading.beta?.toFixed(1) ?? '—'} />
-                <Line label="Gamma" value={compass.reading.gamma?.toFixed(1) ?? '—'} />
-              </>
+            <Line label="状态" value={orientation.status} />
+            <Line label="自动旋转" value={orientation.isAutoRotating ? 'YES' : 'NO'} />
+            {orientation.heading != null && (
+              <Line label="Heading" value={`${Math.round(orientation.heading)}°`} />
             )}
-            {compass.error && <Line label="错误" value={compass.error.code} />}
           </div>
         </div>
       </div>
@@ -521,7 +491,7 @@ function DebugPanel({
         <div className="text-[10px] text-stone2-400 mb-1 flex items-center justify-between">
           <span>🏔️ Stage 4 AR 山峰定位</span>
           <span className={hasRealAR ? 'text-forest-600' : 'text-sand-500'}>
-            {hasRealAR ? '● 实时' : '○ 待 GPS+Heading'}
+            {hasRealAR ? '● 实时' : '○ 待 位置+Heading'}
           </span>
         </div>
         <div className="text-[10px] text-stone2-400 mb-1">
@@ -529,7 +499,7 @@ function DebugPanel({
         </div>
         <div className="space-y-0.5 font-mono leading-tight text-forest-800 max-h-32 overflow-auto">
           {overlay.items.length === 0 && (
-            <div className="text-stone2-300">暂无山峰数据（需要 GPS + Heading 均已开启）</div>
+            <div className="text-stone2-300">暂无山峰数据（开启测试模式或获取真实 GPS+方向）</div>
           )}
           {overlay.items.map((it) => (
             <div key={it.peak.id} className={`flex justify-between gap-2 text-[10px] ${it.inFOV ? '' : 'text-stone2-300'}`}>
@@ -543,9 +513,9 @@ function DebugPanel({
       </div>
 
       {/* 简易指南针可视化 */}
-      {compass.reading && (
+      {orientation.heading != null && (
         <div className="mt-3 pt-3 border-t border-forest-100 flex items-center justify-center">
-          <CompassVisual heading={compass.reading.heading} />
+          <CompassVisual heading={orientation.heading} />
         </div>
       )}
     </div>
@@ -593,23 +563,23 @@ function headingToDirection(heading: number): string {
   return ['北', '东北', '东', '东南', '南', '西南', '西', '西北'][idx]
 }
 
-/** 摄像头模式底部的 dev 小面板（空间状态一行） */
+/** 摄像头模式底部 dev 小面板 */
 function DevPanel({
   camera,
-  geo,
-  compass,
+  location,
+  orientation,
   isMobile
 }: {
   camera: ReturnType<typeof useCamera>
-  geo: ReturnType<typeof useGeolocation>
-  compass: ReturnType<typeof useDeviceOrientation>
+  location: ReturnType<typeof useLocationProvider>
+  orientation: ReturnType<typeof useOrientationProvider>
   isMobile: boolean
 }) {
   return (
     <div className="flex flex-col items-end gap-0.5 text-white/60 text-[9px] leading-tight font-mono text-right">
       <span>📷 {camera.status}</span>
-      <span>📍 {geo.status === 'watching' && geo.reading ? `${geo.reading.latitude.toFixed(4)}, ${geo.reading.longitude.toFixed(4)}` : geo.status}</span>
-      <span>🧭 {compass.status === 'listening' && compass.reading ? `${Math.round(compass.reading.heading)}°` : compass.status}</span>
+      <span>📍 {location.isMock ? 'MOCK ' : ''}{location.latLng ? `${location.latLng.lat.toFixed(4)}, ${location.latLng.lng.toFixed(4)}` : location.status}</span>
+      <span>🧭 {orientation.isMock ? 'MOCK ' : ''}{orientation.heading != null ? `${Math.round(orientation.heading)}°` : orientation.status}</span>
       <span>Device · {isMobile ? 'Mobile' : 'Desktop'}</span>
     </div>
   )
