@@ -87,8 +87,8 @@ export function useArPeakOverlay({
       const rawBearing = calculateBearing(userLatLng, peakLatLng)
       const rawDistance = calculateDistanceKm(userLatLng, peakLatLng)
 
-      // 距离过滤：太远的山峰不显示
-      if (rawDistance > AR_CONFIG.maxDistanceKm) continue
+      // 注意：不按距离过滤。即使 120km 外，bearing 也是精确的（纯几何）。
+      // 是否显示由 FOV 自然裁剪（inFOV=false 的标签会被 ArPeakBadge 隐藏）。
 
       // 相对方位
       const rel = relativeBearing(rawBearing, effectiveHeading)

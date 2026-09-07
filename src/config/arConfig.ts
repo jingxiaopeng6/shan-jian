@@ -10,20 +10,21 @@ export const AR_CONFIG = {
    * 摄像头水平视场角（FOV），单位：度。
    * 手机后置摄像头通常在 55–70° 之间。
    * iPhone 标准约 60°，Android 常见 65°。
-   * 第一版用 60°，后续可根据实机测试微调。
    */
   horizontalFOV: 60,
 
   /**
-   * 最大显示距离（km）——超过此距离的山峰不在屏上渲染。
-   * 武功山主峰之间最远约 15km，设 20km 足够。
+   * **不按距离过滤山峰** —— 只要 bearing 合理就参与计算。
+   * 视野范围由 FOV 自然裁剪（relativeBearingToScreenX 的 inFOV=false 会隐藏）。
+   * 对于武功山这种山峰密集区域，距离过滤没有意义：
+   * - 在武功山脚下：山峰间 1–5km 全在视野内
+   * - 在 120km 外的长沙：bearing 也是精确的（纯几何，和距离无关）
    */
-  maxDistanceKm: 20,
+  // maxDistanceKm 已移除：改为只按 FOV 裁剪
 
   /**
    * heading 平滑系数（lerp factor），(0, 1]
    * 越大越灵敏（跟随快但易抖动），越小越平稳。
-   * 0.3 是体感比较好的起点，可在真机上调。
    */
   headingSmoothing: 0.3,
 
