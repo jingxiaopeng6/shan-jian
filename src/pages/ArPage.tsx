@@ -6,7 +6,9 @@ import CameraView from '../components/CameraView'
 import { useCamera } from '../hooks/useCamera'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
+import { useArPeakOverlay } from '../hooks/useArPeakOverlay'
 import { useIsMobile } from '../hooks/useIsMobile'
+import type { LatLng } from '../utils/geoUtils'
 
 type ArMode = 'simulated' | 'camera'
 
@@ -31,6 +33,17 @@ export default function ArPage() {
   // Stage 3: GPS + 方向传感器
   const geo = useGeolocation()
   const compass = useDeviceOrientation()
+
+  // Stage 4: 真实 AR 山峰定位（GPS + heading → 屏幕 X）
+  const userLatLng: LatLng | null = geo.reading
+    ? { lat: geo.reading.latitude, lng: geo.reading.longitude }
+    : null
+  const realHeading = compass.status === 'listening' && compass.reading
+    ? compass.reading.heading
+    : null
+  const overlay = useArPeakOverlay({ userLatLng, heading: realHeading })
+  // 是否具备 Stage 4 真实 AR 渲染条件
+  const hasRealAR = userLatLng != null && realHeading != null && overlay.items.length > 0
 
   // 离开页面时清理所有资源
   useEffect(() => {
@@ -90,28 +103,38 @@ export default function ArPage() {
                 </div>
               </div>
 
-              {/* 山峰 Badge */}
+              {/* 山峰 Badge —— Stage 4 有真实数据时走 overlay，否则 fallback 到 Stage 2 mock */}
               <div className="pointer-events-none absolute inset-0">
-                {visible.map((v) => {
-                  const peak = getPeakById(v.peakId)
-                  if (!peak) return null
-                  let offset = v.azimuthDeg - currentHeading
-                  while (offset > 180) offset -= 360
-                  while (offset < -180) offset += 360
-                  const clamped = Math.max(-60, Math.min(60, offset))
-                  const leftPct = 8 + ((clamped + 60) / 120) * 84
-                  const verticalPct = 25 + ((v.distanceKm) / 8) * 40
-                  return (
-                    <div key={v.peakId} className="pointer-events-auto">
-                      <ArPeakBadge
-                        peak={peak}
-                        visiblePeak={v}
-                        style={{ left: `${leftPct}%`, top: `${verticalPct}%` }}
-                        onClick={() => navigate(`/peak/${v.peakId}`)}
-                      />
-                    </div>
-                  )
-                })}
+                {hasRealAR
+                  ? overlay.items.map((item) => (
+                      <div key={item.peak.id} className="pointer-events-auto">
+                        <ArPeakBadge
+                          peak={item.peak}
+                          overlay={item}
+                          onClick={() => navigate(`/peak/${item.peak.id}`)}
+                        />
+                      </div>
+                    ))
+                  : visible.map((v) => {
+                      const peak = getPeakById(v.peakId)
+                      if (!peak) return null
+                      let offset = v.azimuthDeg - currentHeading
+                      while (offset > 180) offset -= 360
+                      while (offset < -180) offset += 360
+                      const clamped = Math.max(-60, Math.min(60, offset))
+                      const leftPct = 8 + ((clamped + 60) / 120) * 84
+                      const verticalPct = 25 + ((v.distanceKm) / 8) * 40
+                      return (
+                        <div key={v.peakId} className="pointer-events-auto">
+                          <ArPeakBadge
+                            peak={peak}
+                            visiblePeak={v}
+                            style={{ left: `${leftPct}%`, top: `${verticalPct}%` }}
+                            onClick={() => navigate(`/peak/${v.peakId}`)}
+                          />
+                        </div>
+                      )
+                    })}
               </div>
 
               {/* 底部：视角切换按钮 + 关闭 */}
@@ -293,7 +316,7 @@ export default function ArPage() {
 
           {/* 调试面板（仅 dev） */}
           {import.meta.env.DEV && (
-            <DebugPanel geo={geo} compass={compass} />
+            <DebugPanel geo={geo} compass={compass} overlay={overlay} hasRealAR={hasRealAR} />
           )}
 
           {!isMobile && (
@@ -438,13 +461,17 @@ function CompassStatusChip({
   return null
 }
 
-/** 开发环境 GPS + 方向 调试面板（模拟模式下） */
+/** 开发环境 GPS + 方向 + Stage 4 AR 调试面板（模拟模式下） */
 function DebugPanel({
   geo,
-  compass
+  compass,
+  overlay,
+  hasRealAR
 }: {
   geo: ReturnType<typeof useGeolocation>
   compass: ReturnType<typeof useDeviceOrientation>
+  overlay: ReturnType<typeof useArPeakOverlay>
+  hasRealAR: boolean
 }) {
   return (
     <div className="mt-4 rounded-xl bg-white border border-forest-100 p-3 text-[11px]">
@@ -486,6 +513,32 @@ function DebugPanel({
             )}
             {compass.error && <Line label="错误" value={compass.error.code} />}
           </div>
+        </div>
+      </div>
+
+      {/* Stage 4 AR 计算结果 */}
+      <div className="mt-3 pt-3 border-t border-forest-100">
+        <div className="text-[10px] text-stone2-400 mb-1 flex items-center justify-between">
+          <span>🏔️ Stage 4 AR 山峰定位</span>
+          <span className={hasRealAR ? 'text-forest-600' : 'text-sand-500'}>
+            {hasRealAR ? '● 实时' : '○ 待 GPS+Heading'}
+          </span>
+        </div>
+        <div className="text-[10px] text-stone2-400 mb-1">
+          FOV {overlay.fov}° · 共 {overlay.items.length} 座 · 视野内 {overlay.items.filter(i => i.inFOV).length}
+        </div>
+        <div className="space-y-0.5 font-mono leading-tight text-forest-800 max-h-32 overflow-auto">
+          {overlay.items.length === 0 && (
+            <div className="text-stone2-300">暂无山峰数据（需要 GPS + Heading 均已开启）</div>
+          )}
+          {overlay.items.map((it) => (
+            <div key={it.peak.id} className={`flex justify-between gap-2 text-[10px] ${it.inFOV ? '' : 'text-stone2-300'}`}>
+              <span>{it.peak.name}</span>
+              <span>
+                {Math.round(it.bearingDeg)}° · {it.distanceKm.toFixed(1)}km · rel{it.relativeDeg > 0 ? '+' : ''}{Math.round(it.relativeDeg)}° · x{it.screenXPercent.toFixed(0)}% {it.inFOV ? '' : '(OUT)'}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
