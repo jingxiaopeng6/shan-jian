@@ -111,7 +111,7 @@ export default function ArPage() {
               key={k}
               type="button"
               onClick={() => setHeading(k)}
-              className={`h-8 px-3 rounded-full text-xs border transition ${
+              className={`h-9 sm:h-8 px-3 rounded-full text-xs border transition ${
                 heading === k
                   ? 'bg-forest-700 text-white border-forest-700'
                   : 'bg-white text-forest-700 border-forest-200 hover:bg-forest-50'

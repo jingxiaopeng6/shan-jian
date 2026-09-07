@@ -6,7 +6,7 @@ export default function MapPage() {
   return (
     <div className="relative">
       {/* Cesium 全屏地图容器，手机端高度自适应 */}
-      <div className="w-full relative h-[72vh] sm:h-[68vh]">
+      <div className="w-full relative h-[60vh] sm:h-[68vh]">
         <CesiumMap />
 
         {/* 浮动工具栏 */}

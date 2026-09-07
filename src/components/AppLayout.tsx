@@ -1,16 +1,20 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
+import DevHint from './DevHint'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /**
  * 全局布局壳：
  * - 移动端优先，最大宽度容器
  * - 顶部 Header（首页隐藏返回，其他页面显示返回 + 标题）
  * - 底部极简 Footer（仅品牌小字）
+ * - 开发环境右下角显示手机访问提示
  */
 export default function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const showBack = location.pathname !== '/'
+  const isMobile = useIsMobile()
 
   // 路由切换滚动回顶
   useEffect(() => {
@@ -44,16 +48,16 @@ export default function AppLayout() {
             </div>
           )}
 
-          <div className="flex-1 flex items-center">
+          <div className="flex-1 flex items-center min-w-0">
             <span
-              className={`font-serif tracking-wide ${showBack ? 'text-base text-forest-900' : 'text-lg font-semibold text-forest-800'}`}
+              className={`font-serif tracking-wide truncate ${showBack ? 'text-base text-forest-900' : 'text-lg font-semibold text-forest-800'}`}
             >
               {pageTitle}
             </span>
           </div>
 
-          {!showBack && (
-            <div className="text-xs text-stone2-400 hidden sm:block">武功山示范场景 · MVP</div>
+          {!showBack && !isMobile && (
+            <div className="text-xs text-stone2-400 hidden sm:block whitespace-nowrap">武功山示范场景 · MVP</div>
           )}
         </div>
       </header>
@@ -69,6 +73,9 @@ export default function AppLayout() {
           © 山见 · 智慧文旅 &nbsp;·&nbsp; 看见风景，也看懂风景
         </div>
       </footer>
+
+      {/* 开发环境提示：手机访问地址 + 二维码 */}
+      <DevHint />
     </div>
   )
 }

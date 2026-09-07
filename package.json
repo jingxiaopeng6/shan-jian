@@ -6,6 +6,7 @@
   "description": "山见 - 智慧文旅 Web MVP（武功山示范场景）",
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
