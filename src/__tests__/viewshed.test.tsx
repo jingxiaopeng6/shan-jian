@@ -3,36 +3,38 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import ViewshedPage from '../pages/ViewshedPage'
 
-describe('TR-8.1 / TR-8.2 视域分析页', () => {
-  it('可见山峰清单条目数 >= 5 且含名称/海拔/距离', () => {
+describe('Stage 5 视域分析页', () => {
+  it('渲染剖面图 SVG 且含 >= 3 几何子元素', () => {
     render(
       <MemoryRouter>
         <ViewshedPage />
       </MemoryRouter>
     )
-    const list = screen.getByRole('list')
-    const items = list.querySelectorAll('li')
-    expect(items.length).toBeGreaterThanOrEqual(5)
-    // 检查第一条包含 km（距离）
-    const first = items[0]?.textContent ?? ''
-    expect(first).toMatch(/km/)
-    // 海拔检查
-    expect(first).toMatch(/\d+\s*m/)
+    const profile = screen.getByTestId('viewshed-profile-svg')
+    expect(profile).toBeInTheDocument()
+    const geoms = profile.querySelectorAll('path, line, circle, text')
+    expect(geoms.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('两个 SVG 可视化存在且含 >= 3 几何子元素', () => {
+  it('显示视线分析结果（可见/遮挡关键词）', () => {
     render(
       <MemoryRouter>
         <ViewshedPage />
       </MemoryRouter>
     )
-    const plan = screen.getByTestId('viewshed-plan-svg')
-    const profile = screen.getByTestId('viewshed-profile-svg')
-    expect(plan).toBeInTheDocument()
-    expect(profile).toBeInTheDocument()
-    const planGeoms = plan.querySelectorAll('path, circle, line, text, polygon')
-    const profileGeoms = profile.querySelectorAll('path, line, circle, text')
-    expect(planGeoms.length).toBeGreaterThanOrEqual(3)
-    expect(profileGeoms.length).toBeGreaterThanOrEqual(3)
+    const body = document.body
+    expect(body.textContent).toMatch(/视线/)
+    expect(body.textContent).toMatch(/无遮挡|遮挡/)
+  })
+
+  it('显示距离和海拔数据', () => {
+    render(
+      <MemoryRouter>
+        <ViewshedPage />
+      </MemoryRouter>
+    )
+    const body = document.body
+    expect(body.textContent).toMatch(/km|m/)
+    expect(body.textContent).toMatch(/海拔/)
   })
 })

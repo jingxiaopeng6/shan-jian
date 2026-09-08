@@ -29,7 +29,7 @@ describe('TR-3.2 关键跳转链接', () => {
     expect(cta).toHaveAttribute('href', '/ar')
   })
 
-  it('详情页「为什么能看到？」是 Link，href = /viewshed', () => {
+  it('详情页「为什么能看到？」是 Link，href 含 /viewshed', () => {
     render(
       <MemoryRouter initialEntries={['/peak/jinding']}>
         <Routes>
@@ -38,7 +38,7 @@ describe('TR-3.2 关键跳转链接', () => {
       </MemoryRouter>
     )
     const link = screen.getByRole('link', { name: /为什么能看到/ })
-    expect(link).toHaveAttribute('href', '/viewshed')
+    expect(link).toHaveAttribute('href', '/viewshed?peakId=jinding')
   })
 
   it('详情页「返回 AR 看山」按钮存在（useNavigate 实现）', () => {

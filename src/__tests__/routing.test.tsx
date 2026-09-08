@@ -62,6 +62,6 @@ describe('TR-3.1 5 个页面路由可访问且包含标题', () => {
 
   it('视域分析页 /viewshed 可访问', () => {
     renderAt(['/viewshed'])
-    expect(screen.getByText(/视域分析结果/)).toBeInTheDocument()
+    expect(screen.getByText(/视线分析/)).toBeInTheDocument()
   })
 })

@@ -17,7 +17,7 @@ describe('TR-7.1 山峰详情页', () => {
     expect(screen.getByText(/1918\s*m/)).toBeInTheDocument()
     expect(screen.getByText(/为什么能看到？/)).toBeInTheDocument()
     const viewLink = screen.getByRole('link', { name: /为什么能看到/ })
-    expect(viewLink).toHaveAttribute('href', '/viewshed')
+    expect(viewLink).toHaveAttribute('href', '/viewshed?peakId=jinding')
   })
 
   it('无效 ID 展示「山峰未找到」+ 返回首页链接', () => {

@@ -98,7 +98,7 @@ export default function PeakDetailPage() {
         {/* 底部动作 */}
         <section className="mt-10 mb-4 flex flex-col sm:flex-row gap-3">
           <Link
-            to="/viewshed"
+            to={`/viewshed?peakId=${peak.id}`}
             className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl2 bg-forest-700 text-white text-sm font-medium hover:bg-forest-800 shadow-soft transition"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
