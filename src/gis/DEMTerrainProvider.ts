@@ -5,26 +5,37 @@
  * - getElevation(lat, lng)：单点高程查询
  * - getProfile(observer, target, sampleCount)：沿路径采样真实地形剖面
  *
+ * 坐标系统：
+ * DEM 文件是 EPSG:32649 (WGS84 / UTM Zone 49N) — 投影坐标（米）
+ * 项目内部统一用 WGS84 经纬度 (lat, lng)
+ * 因此 getElevation() 内部需要：WGS84 → UTM49N → row/col
+ *
  * 数据缓存：GeoTIFF 只解析一次，raster 数据缓存在内存中。
  */
 
+import proj4 from 'proj4'
 import type { TerrainProvider, TerrainProfile, TerrainSample, GeoPoint } from './TerrainProvider'
 import type { LatLng } from '../utils/geoUtils'
 
-/** GeoTIFF 元数据 */
+/** WGS84 → UTM Zone 49N 投影定义（武功山所在区域） */
+const UTM49N = '+proj=utm +zone=49 +datum=WGS84 +units=m +no_defs'
+
+/** GeoTIFF 元数据（坐标系已转换说明） */
 interface DemMetadata {
   width: number
   height: number
-  /** 左上角经度 */
+  /** 左上角投影 X 坐标（UTM 米） */
   originX: number
-  /** 左上角纬度 */
+  /** 左上角投影 Y 坐标（UTM 米） */
   originY: number
-  /** 像素宽度（度） */
+  /** 像素宽度（米） */
   pixelWidth: number
-  /** 像素高度（度，通常为负） */
+  /** 像素高度（米，负值表示从上到下递减） */
   pixelHeight: number
-  /** bbox: [minX, minY, maxX, maxY] */
+  /** bbox（投影坐标米） */
   bbox: [number, number, number, number]
+  /** EPSG 代码 */
+  epsg: number
 }
 
 /** DEM 加载状态 */
@@ -60,7 +71,7 @@ export class DEMTerrainProvider implements TerrainProvider {
     return this._status === 'ready' && this.raster !== null && this.metadata !== null
   }
 
-  /** DEM 覆盖范围（用于 UI 显示） */
+  /** DEM 覆盖范围（投影坐标米） */
   get bbox(): [number, number, number, number] | null {
     return this.metadata?.bbox ?? null
   }
@@ -98,6 +109,10 @@ export class DEMTerrainProvider implements TerrainProvider {
       const [pixelWidth, pixelHeight] = image.getResolution()
       const bbox = image.getBoundingBox()
 
+      // 尝试读取 GeoKeys 确定 EPSG
+      const geoKeys = image.getGeoKeys()
+      const epsg = geoKeys?.ProjectedCSTypeGeoKey ?? 0
+
       // 提取第一个波段的数据，转成 Float32Array
       const band0 = rasters[0]
       const data = new Float32Array(width * height)
@@ -115,7 +130,8 @@ export class DEMTerrainProvider implements TerrainProvider {
         originY,
         pixelWidth,
         pixelHeight,
-        bbox: [bbox[0], bbox[1], bbox[2], bbox[3]]
+        bbox: [bbox[0], bbox[1], bbox[2], bbox[3]],
+        epsg
       }
       this._status = 'ready'
     } catch (err) {
@@ -127,28 +143,35 @@ export class DEMTerrainProvider implements TerrainProvider {
   /**
    * 查询指定经纬度的 DEM 高程
    *
-   * 坐标转换：
-   *   col = (longitude - originX) / pixelWidth
-   *   row = (originY - latitude) / (-pixelHeight)
-   *   index = row * width + col
+   * 坐标转换流程：
+   *   WGS84 (lat, lng) → UTM Zone 49N (easting, northing) → raster (col, row) → 高程值
    *
-   * @returns 高程（米），如果坐标超出范围返回 null
+   * @returns 高程（米），如果坐标超出 DEM 范围返回 null
    */
   getElevation(lat: number, lng: number): number | null {
     if (!this.isReady || !this.metadata || !this.raster) return null
 
     const { width, height, originX, originY, pixelWidth, pixelHeight, bbox } = this.metadata
 
-    // 检查是否在 bbox 范围内
-    if (lng < bbox[0] || lng > bbox[2] || lat < bbox[1] || lat > bbox[3]) {
+    // 1. WGS84 lat/lng → UTM Zone 49N easting/northing
+    // proj4([from], [to], [x, y]) — 注意是 [lng, lat] 顺序
+    const [easting, northing] = proj4('WGS84', UTM49N, [lng, lat])
+
+    // 2. 检查是否在 DEM bbox 范围内
+    if (
+      easting < bbox[0] || easting > bbox[2] ||
+      northing < bbox[1] || northing > bbox[3]
+    ) {
       return null
     }
 
-    // 经纬度 → raster row/col
-    const col = Math.floor((lng - originX) / pixelWidth)
-    const row = Math.floor((originY - lat) / Math.abs(pixelHeight))
+    // 3. UTM 坐标 → raster row/col
+    //    col = (easting - originX) / pixelWidth
+    //    row = (originY - northing) / |pixelHeight|   (originY 是左上角，northing 越小越靠下)
+    const col = Math.floor((easting - originX) / pixelWidth)
+    const row = Math.floor((originY - northing) / Math.abs(pixelHeight))
 
-    // 边界保护
+    // 4. 边界保护
     if (col < 0 || col >= width || row < 0 || row >= height) {
       return null
     }
@@ -156,7 +179,7 @@ export class DEMTerrainProvider implements TerrainProvider {
     const idx = row * width + col
     const elev = this.raster[idx]
 
-    // nodata 检查
+    // 5. nodata 检查
     if (elev < 0) return null
 
     return Number(elev.toFixed(1))
@@ -190,7 +213,7 @@ export class DEMTerrainProvider implements TerrainProvider {
 
       samples.push({
         distance: Number(distance.toFixed(1)),
-        elevation: elevation ?? 0 // 超出范围用 0（边界外极少发生）
+        elevation: elevation ?? 0 // 超出范围用 0
       })
     }
 
