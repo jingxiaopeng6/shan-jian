@@ -67,7 +67,11 @@ export class DEMTerrainProvider implements TerrainProvider {
 
   /**
    * 异步加载 GeoTIFF 文件
-   * 解析后缓存 raster + metadata，后续 getElevation 直接查内存
+   *
+   * 流程：先 fetch 整个文件为 ArrayBuffer（单次请求），
+   * 再用 GeoTIFF.fromArrayBuffer 解析。
+   * 避免 geotiff.fromUrl 内部的多次 HTTP Range 请求
+   * 在移动端 Chrome 上触发 ERR_INSUFFICIENT_RESOURCES。
    */
   async load(): Promise<void> {
     if (this._status === 'loading') return
@@ -75,9 +79,16 @@ export class DEMTerrainProvider implements TerrainProvider {
     this._error = null
 
     try {
-      // 动态 import geotiff（避免打包到主 chunk）
+      // 1. 完整 fetch 整个 TIFF 文件（单次请求，5MB）
+      const response = await fetch(this._tiffUrl, { cache: 'no-cache' })
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText}`)
+      }
+      const arrayBuffer = await response.arrayBuffer()
+
+      // 2. 用 fromArrayBuffer 解析（避免 Range requests）
       const GeoTIFF = await import('geotiff')
-      const tiff = await GeoTIFF.fromUrl(this._tiffUrl)
+      const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer)
       const image = await tiff.getImage()
 
       const rasters = await image.readRasters()
