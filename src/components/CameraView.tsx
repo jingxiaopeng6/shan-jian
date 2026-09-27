@@ -20,10 +20,6 @@ interface CameraViewProps {
  * - 山峰叠加层由 ArPage 在 CameraView 之上额外渲染
  */
 export default function CameraView({ videoRef, status, error, onStart, onStop }: CameraViewProps) {
-  // 设备检测——在 iOS Safari 上 playsinline 是关键
-  const isIOS = typeof navigator !== 'undefined' &&
-    /iPad|iPhone|iPod/.test(navigator.userAgent)
-
   // 处理 iOS video 的 click-to-play
   const handleVideoClick = useCallback(() => {
     const v = videoRef.current
@@ -45,7 +41,7 @@ export default function CameraView({ videoRef, status, error, onStart, onStop }:
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
-          playsInline={isIOS}
+          playsInline
           muted
           autoPlay
           // 后置摄像头的视频在某些设备上需要左右翻转

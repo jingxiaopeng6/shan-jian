@@ -130,8 +130,19 @@ export function useArPeakOverlay({
     return output
   }, [userLatLng, heading, peaks])
 
-  // GPS/heading 变化时清理平滑缓存（避免从一个位置跳到另一个位置时的 lag）
+  // 仅在 GPS 位置变化超过阈值（约 100m）时清理平滑缓存
+  // 避免每次微小 GPS 抖动（几米）就清空缓存导致标签跳变
+  const lastClearPosRef = useRef<{ lat: number; lng: number } | null>(null)
   useEffect(() => {
+    if (!userLatLng) return
+    const last = lastClearPosRef.current
+    if (last) {
+      const dLat = userLatLng.lat - last.lat
+      const dLng = userLatLng.lng - last.lng
+      const distM = Math.sqrt(dLat * dLat + dLng * dLng) * 111000
+      if (distM < 100) return // 小于 100m 不清缓存
+    }
+    lastClearPosRef.current = { lat: userLatLng.lat, lng: userLatLng.lng }
     smoothRef.current = {}
   }, [userLatLng?.lat, userLatLng?.lng])
 

@@ -72,8 +72,14 @@ export function useOrientationProvider(): OrientationProvider {
   }, [])
 
   const adjustMockHeading = useCallback((delta: number) => {
-    setMockHeading((h) => normalizeAngle(h + delta))
-  }, [])
+    setMock(true) // 切换到 mock 模式
+    // 如果当前有真实 heading，从真实值开始调整
+    if (!mock && real.reading) {
+      setMockHeading(normalizeAngle(real.reading.heading + delta))
+    } else {
+      setMockHeading((h) => normalizeAngle(h + delta))
+    }
+  }, [mock, real.reading])
 
   const startAutoRotate = useCallback(() => {
     setMock(true)

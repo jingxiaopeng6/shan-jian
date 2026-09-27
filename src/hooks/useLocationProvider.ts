@@ -73,18 +73,29 @@ export function useLocationProvider(
 
   const start = useCallback(() => {
     if (mock) {
-      // mock 模式：确保有一个 mock 点
+      // mock 模式：如果有 mock 点，状态已经通过 latLng 自动生效
+      // 如果没有 mock 点，自动选择第一个预设点
       if (!mockPoint && !effectiveMockLatLng) {
-        // 什么都不做，保持 null
+        // 没有预设点也没有自定义点：保持 null，但状态保持 mock
       }
+      // 状态由 latLng 推导，无需额外操作
     } else {
       geo.startWatching()
     }
   }, [mock, mockPoint, effectiveMockLatLng, geo])
 
   const stop = useCallback(() => {
-    geo.stop()
-  }, [geo])
+    if (mock) {
+      // mock 模式：清除 mock 位置，恢复 idle
+      setMock(false)
+      setMockPointState(null)
+      setCustomLat(null)
+      setCustomLng(null)
+      setCustomAlt(null)
+    } else {
+      geo.stop()
+    }
+  }, [mock, geo])
 
   const setCustomMock = useCallback((lat: number, lng: number, elevation?: number) => {
     setMock(true)

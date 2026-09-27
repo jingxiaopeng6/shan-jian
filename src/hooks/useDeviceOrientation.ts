@@ -140,6 +140,8 @@ export function useDeviceOrientation() {
       }
     }
 
+    // 先移除旧监听器，避免多次调用 start() 导致监听器累积
+    window.removeEventListener('deviceorientation', handleOrientation, true)
     // 绑定监听
     window.addEventListener('deviceorientation', handleOrientation, true)
     setStatus(needsManualPermission ? 'listening' : 'requesting')

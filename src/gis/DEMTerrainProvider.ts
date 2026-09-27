@@ -76,6 +76,21 @@ export class DEMTerrainProvider implements TerrainProvider {
     return this.metadata?.bbox ?? null
   }
 
+  /** DEM 覆盖范围（WGS84 经纬度，用于 UI 显示） */
+  get latLngBBox(): [number, number, number, number] | null {
+    if (!this.metadata) return null
+    const [minX, minY, maxX, maxY] = this.metadata.bbox
+    // UTM → WGS84：左下角和右上角
+    const [west, south] = proj4(UTM49N, 'WGS84', [minX, minY])
+    const [east, north] = proj4(UTM49N, 'WGS84', [maxX, maxY])
+    return [
+      Number(south.toFixed(6)),
+      Number(west.toFixed(6)),
+      Number(north.toFixed(6)),
+      Number(east.toFixed(6))
+    ]
+  }
+
   /**
    * 异步加载 GeoTIFF 文件
    *

@@ -102,10 +102,9 @@ export function analyzeLineOfSight(
     const ratio = sample.distance / totalDistance
 
     // 理论视线高度：从 observer 到 target 的线性插值
-    // 加上 1.6m 的人眼高度（observer 端）
-    const observerEye = observer.elevation + 1.6
-    const targetEye = target.elevation + 1.6
-    const los = observerEye + (targetEye - observerEye) * ratio
+    // 注意：人眼高度（1.6m）由调用方在 effectiveObserver.elevation 中已包含，
+    // 这里不再重复添加。target 是山峰峰顶海拔，也不加人眼高度。
+    const los = observer.elevation + (target.elevation - observer.elevation) * ratio
 
     // 地形是否超过视线
     const blocked = sample.elevation > los + 0.5 // 0.5m 容差

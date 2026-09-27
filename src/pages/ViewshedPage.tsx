@@ -333,9 +333,9 @@ export default function ViewshedPage() {
             <div className="mb-4 pt-3 border-t border-sand-200">
               <div className="text-[10px] text-stone2-500 mb-1.5">DEM 单点高程查询</div>
               {/* DEM 覆盖范围 */}
-              {demProvider.bbox && (
+              {demProvider.latLngBBox && (
                 <div className="text-[10px] text-stone2-400 font-mono mb-2">
-                  DEM 范围: [{demProvider.bbox[0].toFixed(4)}, {demProvider.bbox[1].toFixed(4)}] ~ [{demProvider.bbox[2].toFixed(4)}, {demProvider.bbox[3].toFixed(4)}]
+                  DEM 范围: 纬度 {demProvider.latLngBBox[0].toFixed(4)}~{demProvider.latLngBBox[2].toFixed(4)}, 经度 {demProvider.latLngBBox[1].toFixed(4)}~{demProvider.latLngBBox[3].toFixed(4)}
                 </div>
               )}
               <div className="flex items-center gap-1.5">
