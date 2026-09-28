@@ -1,13 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as Cesium from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { peaks, defaultUserPosition } from '../data/mock'
 import { useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { DEMTerrainProvider } from '../gis/DEMTerrainProvider'
+import { GeoTiffTerrainProvider } from '../gis/GeoTiffTerrainProvider'
 
 /**
  * Cesium 3D 地图组件
- * - EllipsoidTerrainProvider 避免真实地形瓦片依赖
+ * - GeoTiffTerrainProvider：基于真实 DEM (ASTER GDEM 30m) 渲染武功山三维地形
  * - 武功山中心相机定位，山峰 + 当前位置标注
  * - 山峰标注可点击进入详情页
  * - 移动端优化：降低渲染精度、支持触摸手势、减小标注尺寸
@@ -17,6 +19,7 @@ export default function CesiumMap() {
   const viewerRef = useRef<Cesium.Viewer | null>(null)
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const [terrainReady, setTerrainReady] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return
@@ -34,9 +37,22 @@ export default function CesiumMap() {
       selectionIndicator: false,
       creditContainer: undefined,
       shouldAnimate: false,
+      // 先用椭球体占位，DEM 加载完成后替换为真实地形
       terrainProvider: new Cesium.EllipsoidTerrainProvider()
     })
     viewerRef.current = viewer
+
+    // 加载真实 DEM 地形
+    const demProvider = new DEMTerrainProvider('/dem-wugongshan.tif')
+    const geoTiffTerrain = new GeoTiffTerrainProvider(demProvider)
+    geoTiffTerrain.readyPromise.then(() => {
+      viewer.terrainProvider = geoTiffTerrain
+      setTerrainReady(true)
+      // 地形加载后，重新贴地山峰标注
+      viewer.scene.globe.depthTestAgainstTerrain = true
+    }).catch(() => {
+      // DEM 加载失败时保持椭球体地形
+    })
     // 移除 Cesium 版权文字 DOM
     ;(viewer.cesiumWidget.creditContainer as HTMLElement).style.display = 'none'
 
@@ -85,7 +101,7 @@ export default function CesiumMap() {
       const entity = viewer.entities.add({
         id: `peak-${p.id}`,
         name: `${p.name}\n${p.elevation} m`,
-        position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat, p.elevation),
+        position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat),
         point: {
           pixelSize: pointSize,
           color: Cesium.Color.fromCssColorString('#b3813d'),
@@ -101,6 +117,7 @@ export default function CesiumMap() {
           outlineWidth: 2,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           pixelOffset: new Cesium.Cartesian2(0, labelPixelOffset),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           disableDepthTestDistance: Number.POSITIVE_INFINITY
         }
       })
@@ -108,17 +125,18 @@ export default function CesiumMap() {
       ;(entity as any).peakId = p.id
     })
 
-    // 当前用户位置
+    // 当前用户位置（贴地显示）
     const user = defaultUserPosition
     viewer.entities.add({
       id: 'user-pos',
       name: `当前位置 · ${user.name}`,
-      position: Cesium.Cartesian3.fromDegrees(user.lng, user.lat, user.elevation + 20),
+      position: Cesium.Cartesian3.fromDegrees(user.lng, user.lat),
       point: {
         pixelSize: isMobile ? 10 : 12,
         color: Cesium.Color.fromCssColorString('#325043'),
         outlineColor: Cesium.Color.fromCssColorString('#e6d2a9'),
-        outlineWidth: 2
+        outlineWidth: 2,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
       },
       label: {
         text: '当前位置',
@@ -130,6 +148,7 @@ export default function CesiumMap() {
         outlineWidth: 2,
         style: Cesium.LabelStyle.FILL_AND_OUTLINE,
         pixelOffset: new Cesium.Cartesian2(0, isMobile ? -18 : -20),
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     })
@@ -154,11 +173,18 @@ export default function CesiumMap() {
   }, [navigate, isMobile])
 
   return (
-    <div
-      ref={containerRef}
-      className="cesium-container"
-      aria-label="武功山 3D 地图"
-      data-testid="cesium-container"
-    />
+    <div className="relative w-full h-full">
+      <div
+        ref={containerRef}
+        className="cesium-container"
+        aria-label="武功山 3D 地图"
+        data-testid="cesium-container"
+      />
+      {!terrainReady && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-[#23362f]/90 text-[#e6d2a9] text-sm rounded-full shadow-lg z-10 whitespace-nowrap">
+          正在加载武功山三维地形…
+        </div>
+      )}
+    </div>
   )
 }

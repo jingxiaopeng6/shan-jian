@@ -76,6 +76,11 @@ export class DEMTerrainProvider implements TerrainProvider {
     return this.metadata?.bbox ?? null
   }
 
+  /** 原始栅格数据（Float32Array，供 GeoTiffTerrainProvider 批量采样复用） */
+  get rasterData(): Float32Array | null {
+    return this.raster
+  }
+
   /** DEM 覆盖范围（WGS84 经纬度，用于 UI 显示） */
   get latLngBBox(): [number, number, number, number] | null {
     if (!this.metadata) return null
