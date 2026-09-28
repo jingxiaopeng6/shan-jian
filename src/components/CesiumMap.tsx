@@ -2,25 +2,33 @@ import { useEffect, useRef, useState } from 'react'
 import * as Cesium from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { peaks, defaultUserPosition } from '../data/mock'
+import { attractions } from '../data/attractions'
 import { useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { DEMTerrainProvider } from '../gis/DEMTerrainProvider'
 import { GeoTiffTerrainProvider } from '../gis/GeoTiffTerrainProvider'
 
+interface CesiumMapProps {
+  /** 用户 GPS 位置（WGS84），为 null 时使用默认位置 */
+  userPosition?: { lat: number; lng: number } | null
+}
+
 /**
  * Cesium 3D 地图组件
  * - GeoTiffTerrainProvider：基于真实 DEM (ASTER GDEM 30m) 渲染武功山三维地形
- * - 武功山中心相机定位，山峰 + 当前位置标注
+ * - 武功山中心相机定位，山峰 + 景点 + 当前位置标注
  * - 山峰标注可点击进入详情页
  * - 移动端优化：降低渲染精度、支持触摸手势、减小标注尺寸
  */
-export default function CesiumMap() {
+export default function CesiumMap({ userPosition }: CesiumMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<Cesium.Viewer | null>(null)
+  const userEntityRef = useRef<Cesium.Entity | null>(null)
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [terrainReady, setTerrainReady] = useState(false)
 
+  // 初始化地图
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return
 
@@ -37,7 +45,6 @@ export default function CesiumMap() {
       selectionIndicator: false,
       creditContainer: undefined,
       shouldAnimate: false,
-      // 先用椭球体占位，DEM 加载完成后替换为真实地形
       terrainProvider: new Cesium.EllipsoidTerrainProvider()
     })
     viewerRef.current = viewer
@@ -48,40 +55,29 @@ export default function CesiumMap() {
     geoTiffTerrain.readyPromise.then(() => {
       viewer.terrainProvider = geoTiffTerrain
       setTerrainReady(true)
-      // 地形加载后，重新贴地山峰标注
       viewer.scene.globe.depthTestAgainstTerrain = true
     }).catch(() => {
       // DEM 加载失败时保持椭球体地形
     })
-    // 移除 Cesium 版权文字 DOM
     ;(viewer.cesiumWidget.creditContainer as HTMLElement).style.display = 'none'
 
-    // 移动端渲染优化：降低分辨率比例、关闭高精度光照
+    // 移动端渲染优化
     if (isMobile) {
-      // 降低渲染分辨率以提升手机性能
       viewer.resolutionScale = 0.8
-      // 关闭大气和光照效果（减少 GPU 压力）
       viewer.scene.globe.enableLighting = false
-      if (viewer.scene.skyAtmosphere) {
-        viewer.scene.skyAtmosphere.show = false
-      }
-      // 限制帧率以降低功耗
+      if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = false
       viewer.scene.maximumRenderTimeChange = Infinity
-      // 启用触摸输入（Cesium 默认已支持，但显式确认）
       viewer.scene.screenSpaceCameraController.enableRotate = true
       viewer.scene.screenSpaceCameraController.enableTranslate = true
       viewer.scene.screenSpaceCameraController.enableZoom = true
       viewer.scene.screenSpaceCameraController.enableTilt = true
-      // 移动端缩小最大缩放距离限制
       viewer.scene.screenSpaceCameraController.minimumZoomDistance = 1000
       viewer.scene.screenSpaceCameraController.maximumZoomDistance = 80000
     }
 
     // 初始相机定位：武功山
-    const centerLat = 27.485
-    const centerLng = 114.192
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat - 0.05, 35000),
+      destination: Cesium.Cartesian3.fromDegrees(114.192, 27.485 - 0.05, 35000),
       orientation: {
         heading: Cesium.Math.toRadians(0),
         pitch: Cesium.Math.toRadians(-55),
@@ -90,13 +86,14 @@ export default function CesiumMap() {
       duration: 0.01
     })
 
-    // 添加山峰标注（移动端缩小标注尺寸避免遮挡）
+    // 标注尺寸配置
     const labelPixelOffset = isMobile ? -14 : -16
     const pointSize = isMobile ? 7 : 9
     const labelFont = isMobile
       ? '600 11px "PingFang SC", sans-serif'
       : '600 13px "PingFang SC", sans-serif'
 
+    // 山峰标注
     peaks.forEach((p) => {
       const entity = viewer.entities.add({
         id: `peak-${p.id}`,
@@ -121,16 +118,46 @@ export default function CesiumMap() {
           disableDepthTestDistance: Number.POSITIVE_INFINITY
         }
       })
-      // 存储自定义数据以便点击判断
       ;(entity as any).peakId = p.id
     })
 
-    // 当前用户位置（贴地显示）
-    const user = defaultUserPosition
-    viewer.entities.add({
+    // 景点标注（蓝色点，区别于山峰）
+    attractions.forEach((a) => {
+      viewer.entities.add({
+        id: `attr-${a.id}`,
+        name: a.name,
+        position: Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude),
+        point: {
+          pixelSize: isMobile ? 6 : 8,
+          color: a.type === 'service'
+            ? Cesium.Color.fromCssColorString('#2563eb')
+            : Cesium.Color.fromCssColorString('#059669'),
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 1,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+        },
+        label: {
+          text: a.name,
+          font: isMobile
+            ? '500 10px "PingFang SC", sans-serif'
+            : '500 11px "PingFang SC", sans-serif',
+          fillColor: Cesium.Color.fromCssColorString('#1e3a5f'),
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, isMobile ? -12 : -14),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        }
+      })
+    })
+
+    // 用户位置标注（可动态更新）
+    const pos = userPosition ?? { lat: defaultUserPosition.lat, lng: defaultUserPosition.lng }
+    userEntityRef.current = viewer.entities.add({
       id: 'user-pos',
-      name: `当前位置 · ${user.name}`,
-      position: Cesium.Cartesian3.fromDegrees(user.lng, user.lat),
+      name: '当前位置',
+      position: Cesium.Cartesian3.fromDegrees(pos.lng, pos.lat),
       point: {
         pixelSize: isMobile ? 10 : 12,
         color: Cesium.Color.fromCssColorString('#325043'),
@@ -153,7 +180,7 @@ export default function CesiumMap() {
       }
     })
 
-    // 山峰点击跳详情（移动端同时支持触摸事件）
+    // 点击山峰跳详情
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
     handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
       const picked = viewer.scene.pick(click.position)
@@ -169,8 +196,19 @@ export default function CesiumMap() {
       handler.destroy()
       viewer.destroy()
       viewerRef.current = null
+      userEntityRef.current = null
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, isMobile])
+
+  // 监听用户位置变化，更新标注
+  useEffect(() => {
+    const entity = userEntityRef.current
+    if (!entity || !userPosition) return
+    entity.position = new Cesium.ConstantPositionProperty(
+      Cesium.Cartesian3.fromDegrees(userPosition.lng, userPosition.lat)
+    )
+  }, [userPosition])
 
   return (
     <div className="relative w-full h-full">
