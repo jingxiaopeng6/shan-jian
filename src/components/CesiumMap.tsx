@@ -11,6 +11,8 @@ import { GeoTiffTerrainProvider } from '../gis/GeoTiffTerrainProvider'
 interface CesiumMapProps {
   /** 用户 GPS 位置（WGS84），为 null 时使用默认位置 */
   userPosition?: { lat: number; lng: number } | null
+  /** 路线起点和终点，为 null 时不显示路线 */
+  route?: { from: { lat: number; lng: number }; to: { lat: number; lng: number } } | null
 }
 
 /**
@@ -18,12 +20,14 @@ interface CesiumMapProps {
  * - GeoTiffTerrainProvider：基于真实 DEM (ASTER GDEM 30m) 渲染武功山三维地形
  * - 武功山中心相机定位，山峰 + 景点 + 当前位置标注
  * - 山峰标注可点击进入详情页
+ * - 支持基础路线绘制（MVP 示意直线）
  * - 移动端优化：降低渲染精度、支持触摸手势、减小标注尺寸
  */
-export default function CesiumMap({ userPosition }: CesiumMapProps) {
+export default function CesiumMap({ userPosition, route }: CesiumMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<Cesium.Viewer | null>(null)
   const userEntityRef = useRef<Cesium.Entity | null>(null)
+  const routeEntityRef = useRef<Cesium.Entity | null>(null)
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [terrainReady, setTerrainReady] = useState(false)
@@ -209,6 +213,36 @@ export default function CesiumMap({ userPosition }: CesiumMapProps) {
       Cesium.Cartesian3.fromDegrees(userPosition.lng, userPosition.lat)
     )
   }, [userPosition])
+
+  // 监听路线变化，绘制/更新示意直线
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer) return
+
+    // 清除旧路线
+    if (routeEntityRef.current) {
+      viewer.entities.remove(routeEntityRef.current)
+      routeEntityRef.current = null
+    }
+
+    if (!route) return
+
+    const positions = Cesium.Cartesian3.fromDegreesArray([
+      route.from.lng, route.from.lat,
+      route.to.lng, route.to.lat,
+    ])
+
+    routeEntityRef.current = viewer.entities.add({
+      id: 'nav-route',
+      name: '示意路线',
+      polyline: {
+        positions,
+        width: 4,
+        material: Cesium.Color.fromCssColorString('#f59e0b'),
+        clampToGround: true,
+      }
+    })
+  }, [route])
 
   return (
     <div className="relative w-full h-full">
