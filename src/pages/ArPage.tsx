@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { defaultUserPosition, getPeakById, getVisiblePeaks } from '../data/mock'
 import ArPeakBadge, { type HeadingKey } from '../components/ArPeakBadge'
@@ -169,8 +169,8 @@ export default function ArPage() {
       {/* ======== 模拟取景器模式（默认） ======== */}
       {mode === 'simulated' && (
         <div className="max-w-3xl mx-auto px-3 py-4 sm:py-6">
-          {/* 顶部状态栏 */}
-          <div className="flex items-center justify-between px-2 pb-3 flex-wrap gap-2">
+          {/* 顶部状态栏（简化：仅标题 + 朝向 + DEMO 标识） */}
+          <div className="flex items-center justify-between px-2 pb-3">
             <div>
               <div className="text-xs text-stone2-400">
                 模拟摄像头 · {defaultUserPosition.name}
@@ -179,15 +179,10 @@ export default function ArPage() {
                 AR 看山 · 朝向 {labelOf(heading)}
               </div>
             </div>
-            {/* 正式 UI 上的 📍 🧭 状态 */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <GeoStatusChip location={location} compact />
-              <CompassStatusChip orientation={orientation} compact />
-              <span className="inline-flex items-center gap-1 rounded-full bg-forest-700/10 text-forest-700 text-[10px] px-2 py-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-forest-600" />
-                DEMO
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-forest-700/10 text-forest-700 text-[10px] px-2 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-forest-600" />
+              DEMO
+            </span>
           </div>
 
           {/* 取景器 */}
@@ -265,16 +260,17 @@ export default function ArPage() {
             </div>
           </div>
 
-          {/* 方位切换 + GPS + 方向按钮 */}
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
+          {/* 统一控制面板：方位 + 空间感知 + 视域分析 */}
+          <div className="mt-4 rounded-xl bg-white border border-forest-100 p-3 shadow-soft">
+            {/* 方位切换 */}
+            <div className="flex items-center justify-between gap-2">
               <div className="flex flex-wrap gap-1.5">
                 {(['N', 'E', 'S', 'W', 'SW'] as HeadingKey[]).map((k) => (
                   <button
                     key={k}
                     type="button"
                     onClick={() => setHeading(k)}
-                    className={`h-9 sm:h-8 px-3 rounded-full text-xs border transition ${
+                    className={`h-8 px-3 rounded-full text-xs border transition ${
                       heading === k
                         ? 'bg-forest-700 text-white border-forest-700'
                         : 'bg-white text-forest-700 border-forest-200 hover:bg-forest-50'
@@ -287,14 +283,14 @@ export default function ArPage() {
               <button
                 type="button"
                 onClick={() => navigate('/viewshed')}
-                className="text-xs text-forest-600 hover:text-forest-800 whitespace-nowrap"
+                className="text-xs text-forest-600 hover:text-forest-800 whitespace-nowrap font-medium"
               >
                 视域分析 →
               </button>
             </div>
 
-            {/* Stage 3 空间感知按钮组 */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* 空间感知按钮组 */}
+            <div className="mt-3 pt-3 border-t border-forest-100 flex items-center gap-2 flex-wrap">
               <SensingButton
                 label={location.status === 'watching' ? '📍 停止定位' : '📍 获取我的位置'}
                 active={location.status === 'watching'}
