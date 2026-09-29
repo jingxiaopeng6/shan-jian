@@ -70,6 +70,19 @@ export default function HomePage() {
               AR 看山
             </Link>
           </div>
+
+          {/* 快速入口 */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link to="/nfc" className="inline-flex items-center gap-1 px-3 h-9 rounded-full bg-forest-50 border border-forest-200 text-forest-700 text-xs hover:bg-forest-100 transition">
+              📱 NFC 打卡
+            </Link>
+            <Link to="/viewshed" className="inline-flex items-center gap-1 px-3 h-9 rounded-full bg-forest-50 border border-forest-200 text-forest-700 text-xs hover:bg-forest-100 transition">
+              🔍 视域分析
+            </Link>
+            <Link to="/journey" className="inline-flex items-center gap-1 px-3 h-9 rounded-full bg-forest-50 border border-forest-200 text-forest-700 text-xs hover:bg-forest-100 transition">
+              🗺️ 山见档案
+            </Link>
+          </div>
         </section>
 
         {/* GIS 核心说明 */}
