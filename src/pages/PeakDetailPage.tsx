@@ -105,7 +105,7 @@ export default function PeakDetailPage() {
               <path d="M2 20l10-7 10 7" />
               <circle cx="12" cy="9" r="4" />
             </svg>
-            为什么能看到？
+            🔍 视域分析
           </Link>
           <button
             type="button"

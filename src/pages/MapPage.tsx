@@ -162,6 +162,10 @@ export default function MapPage() {
         <div className="absolute left-3 bottom-3 z-20 max-w-[60%] rounded-xl bg-white/85 backdrop-blur border border-forest-100 px-3 py-2 text-[11px] sm:text-xs text-forest-800 shadow-soft">
           <div className="font-medium mb-0.5">武功山 · 江西萍乡</div>
           <div className="text-stone2-500">罗霄山脉北支 · 主峰金顶 1918 m</div>
+          <div className="mt-1 flex items-center gap-1 text-[10px] text-forest-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-forest-500" />
+            真实 DEM 地形 · ASTER GDEM · 30m
+          </div>
         </div>
       </div>
 

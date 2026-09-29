@@ -30,6 +30,7 @@ export default function ArPage() {
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(highlightPeakId)
   const [viewshedResult, setViewshedResult] = useState<ViewshedResult | null>(null)
   const [viewshedLoading, setViewshedLoading] = useState(false)
+  const [showArHint, setShowArHint] = useState(false)
   const demProviderRef = useRef<DEMTerrainProvider | null>(null)
 
   const headingDegMap: Record<HeadingKey, number> = {
@@ -123,6 +124,9 @@ export default function ArPage() {
   const handleEnterCamera = async () => {
     setMode('camera')
     await camera.start()
+    // 首次进入摄像头模式时显示提示
+    setShowArHint(true)
+    setTimeout(() => setShowArHint(false), 4000)
   }
 
   const handleExitCamera = () => {
@@ -146,6 +150,16 @@ export default function ArPage() {
           {/* AR Overlay 层：摄像头画面上叠加山峰 + 状态 */}
           {camera.status === 'streaming' && (
             <>
+              {/* AR 首次使用提示 */}
+              {showArHint && (
+                <div className="pointer-events-none absolute inset-0 z-[35] flex items-center justify-center">
+                  <div className="text-center bg-black/50 backdrop-blur-sm rounded-2xl px-6 py-4 animate-fade-out">
+                    <div className="text-3xl mb-2">🏔️</div>
+                    <p className="text-white text-sm font-medium">转动手机，寻找远处的山峰</p>
+                    <p className="text-white/70 text-[11px] mt-1">正在根据当前位置和手机方向识别山峰</p>
+                  </div>
+                </div>
+              )}
               {/* 顶部：📍 GPS + 🧭 方向 状态 + 方位刻度 */}
               <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-3 pb-2 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent">
                 {/* 左侧：GPS + Compass 状态 */}
@@ -227,13 +241,14 @@ export default function ArPage() {
                         disabled={viewshedLoading}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-forest-700 text-white text-xs font-medium hover:bg-forest-800 disabled:opacity-60 transition"
                       >
-                        {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '为什么能看到？'}
+                        {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '🔍 视域分析'}
                       </button>
                       <button
                         onClick={() => navigate(`/peak/${selectedPeakId}`)}
                         className="flex-1 inline-flex items-center justify-center h-8 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
                       >查看详情</button>
                     </div>
+                    <p className="mt-1 text-[10px] text-stone2-400">基于 DEM 地形计算视线遮挡</p>
                     {/* 内联视域分析结果 */}
                     {viewshedResult && (
                       <div className={`mt-2 pt-2 border-t border-forest-100 text-xs ${viewshedResult.visible ? 'text-forest-700' : 'text-red-600'}`}>
@@ -379,13 +394,14 @@ export default function ArPage() {
                       disabled={viewshedLoading}
                       className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-forest-700 text-white text-xs font-medium hover:bg-forest-800 disabled:opacity-60 transition"
                     >
-                      {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '为什么能看到？'}
+                      {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '🔍 视域分析'}
                     </button>
                     <button
                       onClick={() => navigate(`/peak/${selectedPeakId}`)}
                       className="flex-1 inline-flex items-center justify-center h-8 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
                     >查看详情</button>
                   </div>
+                  <p className="mt-1 text-[10px] text-stone2-400">基于 DEM 地形计算视线遮挡</p>
                   {viewshedResult && (
                     <div className={`mt-2 pt-2 border-t border-forest-100 text-xs ${viewshedResult.visible ? 'text-forest-700' : 'text-red-600'}`}>
                       <div className="flex items-center gap-1.5">

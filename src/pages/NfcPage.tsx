@@ -111,7 +111,7 @@ export default function NfcPage() {
           {nfc.status === 'success' && nfc.result && (
             <div className="text-left">
               <div className="text-center mb-3">
-                <span className="text-4xl">{nfc.result.badgeIcon}</span>
+                <span className="text-4xl inline-block badge-animate">{nfc.result.badgeIcon}</span>
                 <p className="mt-1 text-forest-800 font-semibold text-sm">
                   {nfc.result.name} 打卡成功！
                 </p>

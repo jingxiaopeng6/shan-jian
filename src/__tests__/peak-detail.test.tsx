@@ -15,8 +15,8 @@ describe('TR-7.1 山峰详情页', () => {
     const h1 = screen.getByRole('heading', { level: 1, name: '金顶' })
     expect(h1).toBeInTheDocument()
     expect(screen.getByText(/1918\s*m/)).toBeInTheDocument()
-    expect(screen.getByText(/为什么能看到？/)).toBeInTheDocument()
-    const viewLink = screen.getByRole('link', { name: /为什么能看到/ })
+    expect(screen.getByText(/视域分析/)).toBeInTheDocument()
+    const viewLink = screen.getByRole('link', { name: /视域分析/ })
     expect(viewLink).toHaveAttribute('href', '/viewshed?peakId=jinding')
   })
 
