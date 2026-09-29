@@ -179,6 +179,11 @@ export default function MapPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-forest-500" />
             真实 DEM 地形 · ASTER GDEM · 30m
           </div>
+          <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] text-stone2-500">
+            <span>三维 GIS</span>
+            <span>·</span>
+            <span>GPS 空间定位</span>
+          </div>
         </div>
       </div>
 

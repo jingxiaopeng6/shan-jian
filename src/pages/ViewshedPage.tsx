@@ -144,11 +144,12 @@ export default function ViewshedPage() {
     <PageContainer>
       {/* 标题 */}
       <section className="mb-6">
-        <div className="text-xs text-stone2-400 mb-1">GIS · 视线分析</div>
+        <div className="text-xs text-forest-600 font-medium tracking-wide mb-1">GIS 视域分析</div>
         <h1 className="font-serif text-forest-900 text-2xl font-semibold">
-          {result.visible ? '为什么能看到' : '为什么看不到'}
-          <span className="text-sand-600"> {peak.name}</span>？
+          {result.visible ? '可以看到' : '无法看到'}
+          <span className="text-sand-600"> {peak.name}</span>
         </h1>
+        <p className="mt-1 text-xs text-stone2-500">基于 DEM 地形进行视线分析 · LOS (Line of Sight) 算法</p>
         {/* 数据来源标识 */}
         <div className="mt-2">
           {isDemReady ? (
@@ -180,17 +181,17 @@ export default function ViewshedPage() {
         <section className="space-y-4">
           {/* 观察者信息 */}
           <div className="rounded-xl2 bg-white border border-forest-100 p-4 shadow-soft">
-            <div className="text-[11px] text-stone2-400 tracking-wider mb-2">📍 当前位置</div>
+            <div className="text-[11px] text-stone2-400 tracking-wider mb-2">📍 观察点 · 当前位置</div>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-stone2-500">海拔</span>
+                <span className="text-stone2-500">地面海拔</span>
                 <span className="ml-2 text-forest-800 font-medium tabular-nums">
                   {(effectiveObserver.elevation - OBSERVER_EYE_HEIGHT).toFixed(1)} m
                   <span className="text-[10px] text-stone2-400 ml-1">+ {OBSERVER_EYE_HEIGHT}m 人眼</span>
                 </span>
               </div>
               <div>
-                <span className="text-stone2-500">坐标</span>
+                <span className="text-stone2-500">坐标 (WGS84)</span>
                 <span className="ml-2 text-forest-800 font-mono text-xs">
                   {effectiveObserver.lat.toFixed(4)}°N, {effectiveObserver.lng.toFixed(4)}°E
                 </span>
@@ -207,7 +208,7 @@ export default function ViewshedPage() {
                 <span className="ml-2 text-forest-800 font-medium tabular-nums">{peak.elevation} m</span>
               </div>
               <div>
-                <span className="text-stone2-500">坐标</span>
+                <span className="text-stone2-500">坐标 (WGS84)</span>
                 <span className="ml-2 text-forest-800 font-mono text-xs">
                   {peak.lat.toFixed(4)}°N, {peak.lng.toFixed(4)}°E
                 </span>
@@ -241,7 +242,7 @@ export default function ViewshedPage() {
                 </div>
               </div>
               <div>
-                <div className="text-[10px] text-stone2-400">方位</div>
+                <div className="text-[10px] text-stone2-400">方位角</div>
                 <div className="text-forest-800 font-medium tabular-nums">{Math.round(result.bearing)}°</div>
               </div>
             </div>
@@ -267,17 +268,17 @@ export default function ViewshedPage() {
           <div className="rounded-xl2 bg-white border border-forest-100 p-4 shadow-soft">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-sm font-medium text-forest-800">地形剖面图</div>
+                <div className="text-sm font-medium text-forest-800">视线方向地形剖面</div>
                 <div className="text-[11px] text-stone2-400 mt-0.5">
-                  横轴：距离 纵轴：海拔{isDemReady ? ' · 真实 DEM 数据' : ''}
+                  横轴：距离 (m) · 纵轴：海拔 (m){isDemReady ? ' · 真实 DEM 采样' : ''}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1 text-[10px]">
                 <span className="inline-flex items-center gap-1.5 text-forest-700">
-                  <i className="w-5 h-0.5 bg-forest-700" style={{ borderTop: '1px dashed #325043' }} /> 视线
+                  <i className="w-5 h-0.5 bg-forest-700" style={{ borderTop: '1px dashed #325043' }} /> 观察点视线
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-sand-600">
-                  <i className="w-5 h-1 bg-sand-300 rounded-sm" /> 地形
+                  <i className="w-5 h-1 bg-sand-300 rounded-sm" /> DEM 地形
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-red-500">
                   <i className="w-2 h-2 rounded-full bg-red-500" /> 遮挡点

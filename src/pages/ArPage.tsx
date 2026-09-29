@@ -235,6 +235,10 @@ export default function ArPage() {
                       </div>
                       <button onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }} className="text-stone2-400 hover:text-red-500 text-sm">✕</button>
                     </div>
+                    <div className="mt-1 flex items-center gap-1.5 text-[9px] text-forest-500 bg-forest-50 border border-forest-100 rounded px-1.5 py-0.5 w-fit">
+                      <span className="w-1 h-1 rounded-full bg-forest-400" />
+                      GIS 空间定位 · 距离 {distKm.toFixed(1)}km · 方位 {Math.round(bearingDeg)}° · 海拔 {peak.elevation}m
+                    </div>
                     <div className="mt-2 flex gap-2">
                       <button
                         onClick={() => handleViewshed(selectedPeakId)}
@@ -387,6 +391,10 @@ export default function ArPage() {
                       <span className="ml-2 text-xs text-sand-600">{peak.elevation} m · {vpeak.distanceKm.toFixed(1)} km · {azimuthCompassShort(vpeak.azimuthDeg)}</span>
                     </div>
                     <button onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }} className="text-stone2-400 hover:text-red-500 text-sm">✕</button>
+                  </div>
+                  <div className="mt-1 flex items-center gap-1.5 text-[9px] text-forest-500 bg-forest-50 border border-forest-100 rounded px-1.5 py-0.5 w-fit">
+                    <span className="w-1 h-1 rounded-full bg-forest-400" />
+                    GIS 空间定位 · 距离 {vpeak.distanceKm.toFixed(1)}km · 方位 {Math.round(vpeak.azimuthDeg)}° · 海拔 {peak.elevation}m
                   </div>
                   <div className="mt-2 flex gap-2">
                     <button

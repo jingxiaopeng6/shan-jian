@@ -72,6 +72,14 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* GIS 核心说明 */}
+        <section className="mt-6 rounded-xl2 bg-forest-50 border border-forest-100 p-4">
+          <div className="text-sm font-medium text-forest-800 mb-1">GIS 是《山见》的核心底座</div>
+          <p className="text-xs text-stone2-500 leading-relaxed">
+            通过 DEM、空间定位、三维地形和视域分析，把景区从平面地图变成可计算的数字空间。
+          </p>
+        </section>
+
         {/* 体验流程 */}
         <section className="mt-8 rounded-xl2 bg-white/60 border border-forest-100 p-4 shadow-soft">
           <div className="text-xs text-forest-600 font-medium mb-3 tracking-wide">产品体验流程</div>
