@@ -15,6 +15,8 @@ interface CesiumMapProps {
   route?: { from: { lat: number; lng: number }; to: { lat: number; lng: number } } | null
   /** 点击山峰时的回调（未提供时默认跳转 /peak/:id） */
   onPeakSelect?: (peakId: string) => void
+  /** GPS 轨迹点数组，为空或不传则不显示轨迹 */
+  trackPoints?: { lat: number; lng: number }[]
 }
 
 /**
@@ -25,11 +27,12 @@ interface CesiumMapProps {
  * - 支持基础路线绘制（MVP 示意直线）
  * - 移动端优化：降低渲染精度、支持触摸手势、减小标注尺寸
  */
-export default function CesiumMap({ userPosition, route, onPeakSelect }: CesiumMapProps) {
+export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoints }: CesiumMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<Cesium.Viewer | null>(null)
   const userEntityRef = useRef<Cesium.Entity | null>(null)
   const routeEntityRef = useRef<Cesium.Entity | null>(null)
+  const trackEntityRef = useRef<Cesium.Entity | null>(null)
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [terrainReady, setTerrainReady] = useState(false)
@@ -246,6 +249,36 @@ export default function CesiumMap({ userPosition, route, onPeakSelect }: CesiumM
       }
     })
   }, [route])
+
+  // 监听轨迹变化，绘制/更新轨迹线
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer) return
+
+    // 清除旧轨迹
+    if (trackEntityRef.current) {
+      viewer.entities.remove(trackEntityRef.current)
+      trackEntityRef.current = null
+    }
+
+    if (!trackPoints || trackPoints.length < 2) return
+
+    const coords: number[] = []
+    for (const p of trackPoints) {
+      coords.push(p.lng, p.lat)
+    }
+
+    trackEntityRef.current = viewer.entities.add({
+      id: 'gps-track',
+      name: 'GPS 轨迹',
+      polyline: {
+        positions: Cesium.Cartesian3.fromDegreesArray(coords),
+        width: 3,
+        material: Cesium.Color.fromCssColorString('#3b82f6'),
+        clampToGround: true,
+      }
+    })
+  }, [trackPoints])
 
   return (
     <div className="relative w-full h-full">

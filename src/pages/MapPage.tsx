@@ -8,6 +8,7 @@ import { calculateDistanceKm } from '../utils/geoUtils'
 import { getPeakById } from '../data/mock'
 import { hasVisited } from '../services/travelLog'
 import { findNfcByAttraction } from '../data/nfcPoints'
+import { getTrackPoints } from '../services/trackLog'
 
 export default function MapPage() {
   const geo = useGeolocation()
@@ -15,6 +16,9 @@ export default function MapPage() {
   const [locating, setLocating] = useState(false)
   const [targetId, setTargetId] = useState<string>('')
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null)
+
+  // 读取 GPS 轨迹点（传给 CesiumMap 显示）
+  const trackPoints = getTrackPoints().map((p) => ({ lat: p.lat, lng: p.lng }))
 
   const selectedPeak = selectedPeakId ? getPeakById(selectedPeakId) : null
   const selectedVisited = selectedPeakId ? (() => {
@@ -49,6 +53,7 @@ export default function MapPage() {
           userPosition={userPosition}
           route={route}
           onPeakSelect={(id) => setSelectedPeakId(id)}
+          trackPoints={trackPoints}
         />
 
         {/* 浮动工具栏 */}
