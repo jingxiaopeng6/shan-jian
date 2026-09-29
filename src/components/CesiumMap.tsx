@@ -84,9 +84,10 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
       viewer.scene.screenSpaceCameraController.maximumZoomDistance = 80000
     }
 
-    // 初始相机定位：武功山
+    // 初始相机定位：武功山金顶（中心点对准主峰）
+    // 相机位于金顶东南方向约 2km，25000m 高空，俯视整个山脊
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(114.192, 27.485 - 0.05, 35000),
+      destination: Cesium.Cartesian3.fromDegrees(114.185, 27.465, 25000),
       orientation: {
         heading: Cesium.Math.toRadians(0),
         pitch: Cesium.Math.toRadians(-55),
@@ -95,97 +96,129 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
       duration: 0.01
     })
 
-    // 标注尺寸配置
-    const labelPixelOffset = isMobile ? -14 : -16
-    const pointSize = isMobile ? 7 : 9
-    const labelFont = isMobile
-      ? '600 11px "PingFang SC", sans-serif'
-      : '600 13px "PingFang SC", sans-serif'
+    // 标注尺寸配置 —— 跨平台字体 + 更大字号 + 更粗字重
+    // PingFang SC 仅 macOS 有；Noto Sans SC 项目已配，Windows 上有 Microsoft YaHei 回退
+    const LABEL_FONT_FAMILY = '"Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
+    const labelPixelOffset = isMobile ? -18 : -20
+    const pointSize = isMobile ? 9 : 11
+    const peakLabelFont = isMobile
+      ? `700 13px ${LABEL_FONT_FAMILY}`
+      : `700 15px ${LABEL_FONT_FAMILY}`
+    const attrLabelFont = isMobile
+      ? `600 12px ${LABEL_FONT_FAMILY}`
+      : `600 13px ${LABEL_FONT_FAMILY}`
+    // 标签背景：奶酪半透明，确保任何底色上都清晰
+    const labelBgColor = new Cesium.Color(0.965, 0.945, 0.910, 0.88)  // #F4F1E8 奶酪
+    const labelBgPadding = new Cesium.Cartesian2(8, 6)
+    // 描边色：深森林，比白色在浅色地形上更稳
+    const labelOutlineColor = Cesium.Color.fromCssColorString('#1F2818')
+    // 山峰点色：青苹果深
+    const peakPointColor = Cesium.Color.fromCssColorString('#577A18')
+    const peakOutlineColor = Cesium.Color.fromCssColorString('#F4F1E8')
 
-    // 山峰标注
+    // 山峰标注 —— 用真实海拔定位（不再贴 DEM 表面，避免 30m 精度偏差）
     peaks.forEach((p) => {
       const entity = viewer.entities.add({
         id: `peak-${p.id}`,
         name: `${p.name}\n${p.elevation} m`,
-        position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat),
+        // 关键：传入真实 elevation，让点显示在山峰真实海拔高度
+        position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat, p.elevation),
         point: {
           pixelSize: pointSize,
-          color: Cesium.Color.fromCssColorString('#b3813d'),
-          outlineColor: Cesium.Color.fromCssColorString('#325043'),
-          outlineWidth: 1.2,
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+          color: peakPointColor,
+          outlineColor: peakOutlineColor,
+          outlineWidth: 2,
+          // NONE：使用绝对高度（即上面的 elevation），不依赖 DEM 贴地
+          heightReference: Cesium.HeightReference.NONE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
         },
         label: {
           text: `${p.name}  ${p.elevation}m`,
-          font: labelFont,
-          fillColor: Cesium.Color.fromCssColorString('#23362f'),
-          outlineColor: Cesium.Color.WHITE,
-          outlineWidth: 2,
+          font: peakLabelFont,
+          fillColor: Cesium.Color.fromCssColorString('#1F2818'),
+          outlineColor: labelOutlineColor,
+          outlineWidth: 3,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           pixelOffset: new Cesium.Cartesian2(0, labelPixelOffset),
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY
+          // 标签也用绝对高度
+          heightReference: Cesium.HeightReference.NONE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          // 加奶酪背景，彻底解决与地形混淆
+          showBackground: true,
+          backgroundColor: labelBgColor,
+          backgroundPadding: labelBgPadding
         }
       })
       ;(entity as any).peakId = p.id
     })
 
-    // 景点标注（蓝色点，区别于山峰）
+    // 景点标注（按真实海拔，区别于山峰用青苹果浅色）
     attractions.forEach((a) => {
+      // 景点 type=service 的 elevation 可能是 0（游客中心），用 0 时退化为贴地
+      const useElevation = a.elevation > 0
+      const position = useElevation
+        ? Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude, a.elevation)
+        : Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude)
       viewer.entities.add({
         id: `attr-${a.id}`,
         name: a.name,
-        position: Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude),
+        position,
         point: {
-          pixelSize: isMobile ? 6 : 8,
+          pixelSize: isMobile ? 7 : 9,
           color: a.type === 'service'
-            ? Cesium.Color.fromCssColorString('#2563eb')
-            : Cesium.Color.fromCssColorString('#059669'),
-          outlineColor: Cesium.Color.WHITE,
-          outlineWidth: 1,
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            ? Cesium.Color.fromCssColorString('#D97B3D')   // 暮色橙：服务设施
+            : Cesium.Color.fromCssColorString('#8DB838'),  // 青苹果：景点
+          outlineColor: Cesium.Color.fromCssColorString('#F4F1E8'),
+          outlineWidth: 1.5,
+          heightReference: useElevation ? Cesium.HeightReference.NONE : Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
         },
         label: {
           text: a.name,
-          font: isMobile
-            ? '500 10px "PingFang SC", sans-serif'
-            : '500 11px "PingFang SC", sans-serif',
-          fillColor: Cesium.Color.fromCssColorString('#1e3a5f'),
-          outlineColor: Cesium.Color.WHITE,
-          outlineWidth: 2,
+          font: attrLabelFont,
+          fillColor: Cesium.Color.fromCssColorString('#1F2818'),
+          outlineColor: labelOutlineColor,
+          outlineWidth: 2.5,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(0, isMobile ? -12 : -14),
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY
+          pixelOffset: new Cesium.Cartesian2(0, isMobile ? -16 : -18),
+          heightReference: useElevation ? Cesium.HeightReference.NONE : Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          showBackground: true,
+          backgroundColor: labelBgColor,
+          backgroundPadding: labelBgPadding
         }
       })
     })
 
-    // 用户位置标注（可动态更新）
+    // 用户位置标注（可动态更新）—— GPS 点用暮色橙醒目
     const pos = userPosition ?? { lat: defaultUserPosition.lat, lng: defaultUserPosition.lng }
     userEntityRef.current = viewer.entities.add({
       id: 'user-pos',
       name: '当前位置',
       position: Cesium.Cartesian3.fromDegrees(pos.lng, pos.lat),
       point: {
-        pixelSize: isMobile ? 10 : 12,
-        color: Cesium.Color.fromCssColorString('#325043'),
-        outlineColor: Cesium.Color.fromCssColorString('#e6d2a9'),
-        outlineWidth: 2,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-      },
-      label: {
-        text: '当前位置',
-        font: isMobile
-          ? '500 11px "PingFang SC", sans-serif'
-          : '500 12px "PingFang SC", sans-serif',
-        fillColor: Cesium.Color.fromCssColorString('#325043'),
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 2,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, isMobile ? -18 : -20),
+        pixelSize: isMobile ? 11 : 13,
+        color: Cesium.Color.fromCssColorString('#D97B3D'),  // 暮色橙：用户位置最醒目
+        outlineColor: Cesium.Color.fromCssColorString('#F4F1E8'),
+        outlineWidth: 2.5,
         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
+      },
+      label: {
+        text: '📍 我的位置',
+        font: isMobile
+          ? `600 12px ${LABEL_FONT_FAMILY}`
+          : `600 13px ${LABEL_FONT_FAMILY}`,
+        fillColor: Cesium.Color.fromCssColorString('#1F2818'),
+        outlineColor: labelOutlineColor,
+        outlineWidth: 2.5,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, isMobile ? -22 : -24),
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        showBackground: true,
+        backgroundColor: labelBgColor,
+        backgroundPadding: labelBgPadding
       }
     })
 
@@ -289,7 +322,8 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
         data-testid="cesium-container"
       />
       {!terrainReady && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-[#23362f]/90 text-[#e6d2a9] text-sm rounded-full shadow-lg z-10 whitespace-nowrap">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 glass-light text-apple-700 text-sm rounded-full shadow-glass z-10 whitespace-nowrap inline-flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full border-2 border-apple-400/40 border-t-apple-500 animate-spin" />
           正在加载武功山三维地形…
         </div>
       )}
