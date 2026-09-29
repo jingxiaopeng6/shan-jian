@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PageContainer from '../components/PageContainer'
 import CesiumMap from '../components/CesiumMap'
 import { Link, useNavigate } from 'react-router-dom'
@@ -16,6 +16,12 @@ export default function MapPage() {
   const [locating, setLocating] = useState(false)
   const [targetId, setTargetId] = useState<string>('')
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null)
+  const [showHint, setShowHint] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowHint(false), 3000)
+    return () => clearTimeout(t)
+  }, [])
 
   // 读取 GPS 轨迹点（传给 CesiumMap 显示）
   const trackPoints = getTrackPoints().map((p) => ({ lat: p.lat, lng: p.lng }))
@@ -81,6 +87,13 @@ export default function MapPage() {
             视域分析
           </Link>
         </div>
+
+        {/* 产品提示（3 秒后自动消失） */}
+        {showHint && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 px-3 py-1.5 bg-forest-800/80 text-white text-xs rounded-full backdrop-blur transition-opacity">
+            探索一座山，从地图开始。
+          </div>
+        )}
 
         {/* 路线选择 + 距离 */}
         {target && (

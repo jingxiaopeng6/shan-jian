@@ -5,7 +5,7 @@ import HomePage from '../pages/HomePage'
 import PeakDetailPage from '../pages/PeakDetailPage'
 
 describe('TR-3.2 关键跳转链接', () => {
-  it('首页 CTA 「进入武功山」跳转到 /map', () => {
+  it('首页 CTA 「开始探索武功山」跳转到 /map', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>
@@ -13,11 +13,11 @@ describe('TR-3.2 关键跳转链接', () => {
         </Routes>
       </MemoryRouter>
     )
-    const cta = screen.getByRole('link', { name: /进入武功山/ })
+    const cta = screen.getByRole('link', { name: /开始探索武功山/ })
     expect(cta).toHaveAttribute('href', '/map')
   })
 
-  it('首页「快速体验 AR 看山」跳转到 /ar', () => {
+  it('首页「AR 看山」跳转到 /ar', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>
@@ -25,7 +25,7 @@ describe('TR-3.2 关键跳转链接', () => {
         </Routes>
       </MemoryRouter>
     )
-    const cta = screen.getByRole('link', { name: /快速体验 AR 看山/ })
+    const cta = screen.getByRole('link', { name: /^AR 看山$/ })
     expect(cta).toHaveAttribute('href', '/ar')
   })
 

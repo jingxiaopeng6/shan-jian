@@ -59,9 +59,9 @@ export default function JourneyPage() {
         <div className="rounded-2xl bg-gradient-to-br from-forest-800 to-forest-900 text-white p-5 shadow-soft">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-xs text-sand-300">探索进度</div>
+              <div className="text-xs text-sand-300">这是你的山见旅程</div>
               <div className="text-2xl font-bold mt-1">{stats.exploredCount} / {stats.totalAttractions}</div>
-              <div className="text-xs text-sand-300 mt-0.5">{stats.progress}%</div>
+              <div className="text-xs text-sand-300 mt-0.5">{stats.progress}% · 每一次抵达，都成为你的旅行记录</div>
             </div>
             <div className="w-16 h-16 relative">
               <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
@@ -111,7 +111,7 @@ export default function JourneyPage() {
             <span>✓</span> 已探索景点 ({stats.exploredCount})
           </h2>
           {stats.exploredCount === 0 ? (
-            <p className="text-xs text-stone2-400">暂无探索记录，去 <Link to="/nfc" className="text-forest-600 underline">NFC 打卡</Link> 开启旅程吧！</p>
+            <p className="text-xs text-stone2-400">还没有打卡记录，去 <Link to="/nfc" className="text-forest-600 underline">NFC 打卡</Link> 开启你的第一段旅程吧！</p>
           ) : (
             <div className="space-y-2">
               {nfcPoints
@@ -196,6 +196,7 @@ export default function JourneyPage() {
           <Link to="/map" className="text-xs text-forest-600 hover:text-forest-800">地图</Link>
           <Link to="/ar" className="text-xs text-forest-600 hover:text-forest-800">AR 看山</Link>
           <Link to="/nfc" className="text-xs text-forest-600 hover:text-forest-800">NFC 打卡</Link>
+          <Link to="/viewshed" className="text-xs text-forest-600 hover:text-forest-800">视域分析</Link>
         </div>
       </div>
     </div>

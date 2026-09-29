@@ -50,8 +50,7 @@ export default function HomePage() {
             看见风景，也看懂风景。
           </p>
           <p className="mt-3 text-sm text-stone2-500 leading-relaxed max-w-sm">
-            一款以武功山为示范场景的智慧文旅体验产品——
-            借助 3D 地图、AR 识山与视域分析，让每一次仰望都更有分量。
+            基于三维 GIS、AR 与空间智能的景区探索体验
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -59,7 +58,7 @@ export default function HomePage() {
               to="/map"
               className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl2 bg-forest-700 text-white text-sm font-medium hover:bg-forest-800 active:bg-forest-900 transition shadow-soft"
             >
-              进入武功山
+              开始探索武功山
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M13 5l7 7-7 7" />
               </svg>
@@ -68,22 +67,38 @@ export default function HomePage() {
               to="/ar"
               className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl2 border border-forest-200 text-forest-800 text-sm font-medium bg-white/60 hover:bg-white active:bg-forest-50 transition"
             >
-              快速体验 AR 看山
+              AR 看山
             </Link>
+          </div>
+        </section>
+
+        {/* 体验流程 */}
+        <section className="mt-8 rounded-xl2 bg-white/60 border border-forest-100 p-4 shadow-soft">
+          <div className="text-xs text-forest-600 font-medium mb-3 tracking-wide">产品体验流程</div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-stone2-600">
+            <FlowStep icon="🗺️" label="地图认知" />
+            <FlowArrow />
+            <FlowStep icon="📷" label="AR 看山" />
+            <FlowArrow />
+            <FlowStep icon="🔍" label="视域分析" />
+            <FlowArrow />
+            <FlowStep icon="📱" label="NFC 打卡" />
+            <FlowArrow />
+            <FlowStep icon="🗺️" label="山见档案" />
           </div>
         </section>
 
         {/* 三个特性 */}
         <section className="mt-6 grid gap-3 sm:grid-cols-3">
           <FeatureCard
-            title="3D 地图"
-            desc="基于 CesiumJS 的武功山三维地形与山峰标注。"
+            title="三维 GIS"
+            desc="基于真实 DEM 的武功山三维地形与山峰标注。"
             icon={
               <path d="M3 11l9-8 9 8-9 8-9-8zM3 11v10h18V11" />
             }
           />
           <FeatureCard
-            title="AR 识山"
+            title="AR 看山"
             desc="视线方向内的山峰名称、海拔与距离实时叠加。"
             icon={
               <>
@@ -95,7 +110,7 @@ export default function HomePage() {
           />
           <FeatureCard
             title="视域分析"
-            desc="GIS 视角下的可视扇区与剖面——告诉你为什么能看到。"
+            desc="基于 DEM 地形计算视线遮挡，告诉你这座山能不能看到。"
             icon={
               <>
                 <path d="M2 20l10-7 10 7" />
@@ -133,4 +148,17 @@ function FeatureCard({ title, desc, icon }: FeatureCardProps) {
       <div className="text-stone2-500 text-xs leading-relaxed">{desc}</div>
     </div>
   )
+}
+
+function FlowStep({ icon, label }: { icon: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-forest-50 border border-forest-100 text-forest-700">
+      <span>{icon}</span>
+      {label}
+    </span>
+  )
+}
+
+function FlowArrow() {
+  return <span className="text-forest-400 text-[10px]">→</span>
 }

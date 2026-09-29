@@ -233,6 +233,7 @@ export default function NfcPage() {
           <Link to="/map" className="text-xs text-forest-600 hover:text-forest-800">地图</Link>
           <Link to="/ar" className="text-xs text-forest-600 hover:text-forest-800">AR 看山</Link>
           <Link to="/viewshed" className="text-xs text-forest-600 hover:text-forest-800">视域分析</Link>
+          <Link to="/journey" className="text-xs text-forest-600 hover:text-forest-800">山见档案</Link>
         </div>
       </div>
     </div>
