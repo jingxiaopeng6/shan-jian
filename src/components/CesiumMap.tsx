@@ -64,7 +64,9 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
     geoTiffTerrain.readyPromise.then(() => {
       viewer.terrainProvider = geoTiffTerrain
       setTerrainReady(true)
-      viewer.scene.globe.depthTestAgainstTerrain = true
+      // false：让贴地的点和标签不被山体遮挡（配合 disableDepthTestDistance: Infinity）
+      // 这样地标准确贴在 3D 山顶，且始终可见
+      viewer.scene.globe.depthTestAgainstTerrain = false
     }).catch(() => {
       // DEM 加载失败时保持椭球体地形
     })
@@ -116,20 +118,21 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
     const peakPointColor = Cesium.Color.fromCssColorString('#577A18')
     const peakOutlineColor = Cesium.Color.fromCssColorString('#F4F1E8')
 
-    // 山峰标注 —— 用真实海拔定位（不再贴 DEM 表面，避免 30m 精度偏差）
+    // 山峰标注 —— CLAMP_TO_GROUND 让点准确贴在 DEM 渲染的山顶表面
+    // 配合 disableDepthTestDistance: Infinity 让点和标签不被山体遮挡，始终可见
     peaks.forEach((p) => {
       const entity = viewer.entities.add({
         id: `peak-${p.id}`,
         name: `${p.name}\n${p.elevation} m`,
-        // 关键：传入真实 elevation，让点显示在山峰真实海拔高度
-        position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat, p.elevation),
+        position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat),
         point: {
           pixelSize: pointSize,
           color: peakPointColor,
           outlineColor: peakOutlineColor,
           outlineWidth: 2,
-          // NONE：使用绝对高度（即上面的 elevation），不依赖 DEM 贴地
-          heightReference: Cesium.HeightReference.NONE,
+          // CLAMP_TO_GROUND：贴 DEM 表面，点准确落在 3D 山顶上
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          // 始终可见，不被地形遮挡
           disableDepthTestDistance: Number.POSITIVE_INFINITY
         },
         label: {
@@ -140,8 +143,8 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
           outlineWidth: 3,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           pixelOffset: new Cesium.Cartesian2(0, labelPixelOffset),
-          // 标签也用绝对高度
-          heightReference: Cesium.HeightReference.NONE,
+          // 标签也贴地，与点保持空间一致
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           // 加奶酪背景，彻底解决与地形混淆
           showBackground: true,
@@ -152,17 +155,12 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
       ;(entity as any).peakId = p.id
     })
 
-    // 景点标注（按真实海拔，区别于山峰用青苹果浅色）
+    // 景点标注 —— 同样贴 DEM 表面，确保落在 3D 地形上
     attractions.forEach((a) => {
-      // 景点 type=service 的 elevation 可能是 0（游客中心），用 0 时退化为贴地
-      const useElevation = a.elevation > 0
-      const position = useElevation
-        ? Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude, a.elevation)
-        : Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude)
       viewer.entities.add({
         id: `attr-${a.id}`,
         name: a.name,
-        position,
+        position: Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude),
         point: {
           pixelSize: isMobile ? 7 : 9,
           color: a.type === 'service'
@@ -170,7 +168,7 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
             : Cesium.Color.fromCssColorString('#8DB838'),  // 青苹果：景点
           outlineColor: Cesium.Color.fromCssColorString('#F4F1E8'),
           outlineWidth: 1.5,
-          heightReference: useElevation ? Cesium.HeightReference.NONE : Cesium.HeightReference.CLAMP_TO_GROUND,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           disableDepthTestDistance: Number.POSITIVE_INFINITY
         },
         label: {
@@ -181,7 +179,7 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
           outlineWidth: 2.5,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           pixelOffset: new Cesium.Cartesian2(0, isMobile ? -16 : -18),
-          heightReference: useElevation ? Cesium.HeightReference.NONE : Cesium.HeightReference.CLAMP_TO_GROUND,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           showBackground: true,
           backgroundColor: labelBgColor,
