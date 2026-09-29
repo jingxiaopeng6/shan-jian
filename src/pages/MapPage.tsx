@@ -6,6 +6,8 @@ import { useGeolocation } from '../hooks/useGeolocation'
 import { attractions } from '../data/attractions'
 import { calculateDistanceKm } from '../utils/geoUtils'
 import { getPeakById } from '../data/mock'
+import { hasVisited } from '../services/travelLog'
+import { findNfcByAttraction } from '../data/nfcPoints'
 
 export default function MapPage() {
   const geo = useGeolocation()
@@ -15,6 +17,10 @@ export default function MapPage() {
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null)
 
   const selectedPeak = selectedPeakId ? getPeakById(selectedPeakId) : null
+  const selectedVisited = selectedPeakId ? (() => {
+    const nfcPoint = findNfcByAttraction(selectedPeakId)
+    return nfcPoint ? hasVisited(nfcPoint.attractionId) : false
+  })() : false
 
   const userPosition = geo.reading
     ? { lat: geo.reading.latitude, lng: geo.reading.longitude }
@@ -129,6 +135,19 @@ export default function MapPage() {
                 className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
               >
                 视域分析
+              </button>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              {selectedVisited && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-forest-100 text-forest-700 text-[10px] rounded-full">
+                  ✓ 已打卡
+                </span>
+              )}
+              <button
+                onClick={() => navigate('/nfc')}
+                className="text-[11px] text-forest-600 hover:text-forest-800 underline"
+              >
+                NFC 打卡 →
               </button>
             </div>
           </div>
