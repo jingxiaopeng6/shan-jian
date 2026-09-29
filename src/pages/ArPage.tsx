@@ -136,8 +136,8 @@ export default function ArPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-ink">
-      {/* ======== 摄像头模式：全屏沉浸式 ======== */}
+    <div className="relative min-h-screen bg-cheese">
+      {/* ======== 摄像头模式：全屏沉浸式（摄像头本质黑色）======== */}
       {mode === 'camera' && (
         <div className="fixed inset-0 z-40 bg-black">
           <CameraView
@@ -154,15 +154,15 @@ export default function ArPage() {
               {/* AR 首次使用 onboarding —— 极简、1.5 秒自动消失 */}
               {showArHint && (
                 <div className="pointer-events-none absolute inset-0 z-[35] flex items-center justify-center px-6">
-                  <div className="text-center glass-panel rounded-3xl px-8 py-6 animate-fade-out">
-                    <Crosshair className="mx-auto mb-3 text-gold" size={32} strokeWidth={1.5} />
-                    <p className="text-mist text-sm font-medium tracking-wide">寻找山峰</p>
-                    <p className="text-mist/60 text-[11px] mt-1.5">转动手机，让山峰进入视野</p>
+                  <div className="text-center glass-dark rounded-3xl px-8 py-6 animate-fade-out">
+                    <Crosshair className="mx-auto mb-3 text-apple-400" size={32} strokeWidth={1.5} />
+                    <p className="text-cheese-50 text-sm font-medium tracking-wide">寻找山峰</p>
+                    <p className="text-cheese-50/60 text-[11px] mt-1.5">转动手机，让山峰进入视野</p>
                   </div>
                 </div>
               )}
 
-              {/* 顶部状态栏 —— 极简玻璃 chip */}
+              {/* 顶部状态栏 —— 极简暗玻璃 chip */}
               <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-safe pb-3 flex items-start justify-between gap-3 bg-gradient-to-b from-black/50 to-transparent">
                 {/* 左侧：GPS + Compass 状态 */}
                 <div className="pointer-events-auto flex flex-col gap-1.5">
@@ -170,8 +170,8 @@ export default function ArPage() {
                   <CompassStatusChip orientation={orientation} />
                 </div>
                 {/* 右侧：方位刻度 */}
-                <div className="pointer-events-none flex items-center gap-2 text-mist/80 text-[11px] tracking-[0.2em] pt-1 font-mono">
-                  <Navigation size={10} className="text-gold/70" />
+                <div className="pointer-events-none flex items-center gap-2 text-cheese-50/80 text-[11px] tracking-[0.2em] pt-1 font-mono">
+                  <Navigation size={10} className="text-apple-400/70" />
                   <span>{az(currentHeading)}</span>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function ArPage() {
                   <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/40" />
                   <div className="absolute top-1/2 left-0 right-0 h-px bg-white/40" />
                   <div className="absolute inset-3 rounded-full border border-white/30" />
-                  <div className="absolute inset-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/80" />
+                  <div className="absolute inset-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-apple-400/80" />
                 </div>
               </div>
 
@@ -222,7 +222,7 @@ export default function ArPage() {
                     })}
               </div>
 
-              {/* AR 山峰信息卡（点击 badge 后弹出）—— 半透明玻璃信息卡 */}
+              {/* AR 山峰信息卡（点击 badge 后弹出）—— 暗玻璃 + 奶酪字 + 青苹果强调 */}
               {selectedPeakId && (hasRealAR || visible.some(v => v.peakId === selectedPeakId)) && (() => {
                 const peak = getPeakById(selectedPeakId)
                 if (!peak) return null
@@ -232,16 +232,16 @@ export default function ArPage() {
                 const bearingDeg = overlayItem ? overlayItem.bearingDeg : visiblePeak?.azimuthDeg ?? 0
                 return (
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-30 w-[90%] max-w-sm pointer-events-auto animate-enter-fade">
-                    <div className="glass-panel rounded-2xl p-4 shadow-2xl">
+                    <div className="glass-dark rounded-2xl p-4 shadow-deep">
                       {/* 顶部：关闭 + 山峰名 */}
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="font-serif text-mist text-lg font-semibold">{peak.name}</h3>
-                          <p className="mt-0.5 text-gold text-xs font-medium tabular-nums">{peak.elevation} m</p>
+                          <h3 className="font-serif text-cheese-50 text-lg font-semibold">{peak.name}</h3>
+                          <p className="mt-0.5 text-apple-400 text-xs font-medium tabular-nums">{peak.elevation} m</p>
                         </div>
                         <button
                           onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }}
-                          className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-mist/60 hover:text-mist transition"
+                          className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-cheese-50/60 hover:text-cheese-50 transition"
                           aria-label="关闭"
                         >
                           <X size={14} />
@@ -249,29 +249,29 @@ export default function ArPage() {
                       </div>
 
                       {/* 距离 + 方位 */}
-                      <div className="mt-3 flex items-center gap-4 text-[11px] text-mist/70">
+                      <div className="mt-3 flex items-center gap-4 text-[11px] text-cheese-50/70">
                         <span className="flex items-center gap-1.5 tabular-nums">
-                          <MapPin size={11} className="text-moss" />
+                          <MapPin size={11} className="text-apple-400" />
                           距离 {distKm.toFixed(1)} km
                         </span>
                         <span className="flex items-center gap-1.5 tabular-nums">
-                          <Compass size={11} className="text-moss" />
+                          <Compass size={11} className="text-apple-400" />
                           {azimuthCompassShort(bearingDeg)} {Math.round(bearingDeg)}°
                         </span>
                       </div>
 
-                      {/* 视域分析结果（如果有） */}
+                      {/* 视域分析结果 */}
                       {viewshedResult && (
-                        <div className={`mt-3 pt-3 border-t border-white/10 text-xs ${viewshedResult.visible ? 'text-moss' : 'text-red-400'}`}>
+                        <div className={`mt-3 pt-3 border-t border-white/10 text-xs ${viewshedResult.visible ? 'text-apple-400' : 'text-amber-400'}`}>
                           <div className="flex items-center gap-1.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${viewshedResult.visible ? 'bg-moss' : 'bg-red-500'} pulse-dot`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${viewshedResult.visible ? 'bg-apple-400' : 'bg-amber-400'} pulse-dot`} />
                             {viewshedResult.visible ? '可见 · 无地形遮挡' : '不可见 · 被地形遮挡'}
                           </div>
-                          <div className="mt-1 text-[10px] text-mist/50 tabular-nums">
+                          <div className="mt-1 text-[10px] text-cheese-50/50 tabular-nums">
                             距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m
                           </div>
                           {viewshedResult.obstruction && (
-                            <div className="mt-1 text-[10px] text-red-400/80 leading-relaxed">
+                            <div className="mt-1 text-[10px] text-amber-400/80 leading-relaxed">
                               在 {formatDistanceM(viewshedResult.obstruction.distance)} 处地形超出视线 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
                             </div>
                           )}
@@ -282,11 +282,11 @@ export default function ArPage() {
                       <button
                         onClick={() => handleViewshed(selectedPeakId)}
                         disabled={viewshedLoading}
-                        className="mt-3 w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-gold/90 text-ink text-xs font-semibold hover:bg-gold disabled:opacity-60 transition active:scale-[0.98]"
+                        className="mt-3 w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-apple-400 text-cheese-50 text-xs font-semibold hover:bg-apple-300 disabled:opacity-60 transition active:scale-[0.98] shadow-apple"
                       >
                         {viewshedLoading ? (
                           <>
-                            <span className="w-3.5 h-3.5 rounded-full border-2 border-ink/40 border-t-ink animate-spin" />
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-cheese-50/40 border-t-cheese-50 animate-spin" />
                             分析中…
                           </>
                         ) : (
@@ -313,8 +313,8 @@ export default function ArPage() {
                         onClick={() => setHeading(k)}
                         className={`h-8 px-3 rounded-full text-[11px] border transition active:scale-95 ${
                           heading === k
-                            ? 'bg-mist text-ink border-mist font-medium'
-                            : 'bg-white/10 text-mist border-white/20 hover:bg-white/20'
+                            ? 'bg-apple-400 text-cheese-50 border-apple-400 font-medium'
+                            : 'glass-dark text-cheese-50/80 border-white/20 hover:bg-white/10'
                         }`}
                       >
                         {labelOf(k)}
@@ -329,27 +329,27 @@ export default function ArPage() {
         </div>
       )}
 
-      {/* ======== 模拟取景器模式（默认）—— 深色沉浸式 ======== */}
+      {/* ======== 模拟取景器模式（默认）—— 奶酪底 + 深色山景取景器 ======== */}
       {mode === 'simulated' && (
-        <div className="min-h-screen bg-ink text-mist">
+        <div className="min-h-screen bg-cheese text-ink">
           <div className="max-w-3xl mx-auto px-3 py-4 sm:py-6 safe-top">
-            {/* 顶部状态栏 */}
+            {/* 顶部状态栏 —— 奶酪玻璃 */}
             <div className="flex items-center justify-between px-2 pb-3">
               <div>
-                <div className="text-[10px] text-mist/40 tracking-wider uppercase">AR 看山</div>
-                <div className="text-sm text-mist font-medium mt-0.5">
-                  朝向 <span className="text-gold">{labelOf(heading)}</span>
+                <div className="text-overline text-apple-600 tracking-wider font-semibold">AR 看山</div>
+                <div className="text-sm text-ink font-medium mt-0.5">
+                  朝向 <span className="text-apple-600 font-semibold">{labelOf(heading)}</span>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 text-mist/70 text-[10px] px-2.5 py-1 border border-white/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-gold pulse-dot" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-apple-50 text-apple-700 text-overline px-2.5 py-1 border border-apple-400/40">
+                <span className="w-1.5 h-1.5 rounded-full bg-apple-500 pulse-dot" />
                 演示模式
               </span>
             </div>
 
-            {/* 取景器 —— 深色山景 */}
+            {/* 取景器 —— 深色山景（模拟夜晚/晨雾山景，符合"AR 山景"的沉浸感） */}
             <div
-              className="relative rounded-3xl overflow-hidden bg-ink border border-white/5 shadow-2xl"
+              className="relative rounded-3xl overflow-hidden bg-ink-300 shadow-deep ring-1 ring-apple-400/20"
               style={{ aspectRatio: '9 / 16' }}
               role="img"
               aria-label="模拟 AR 摄像头画面"
@@ -379,20 +379,20 @@ export default function ArPage() {
                 </svg>
               </div>
 
-              {/* 十字准星 */}
+              {/* 十字准星 —— 青苹果色调 */}
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="relative w-16 h-16">
                   <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/50" />
                   <div className="absolute top-1/2 left-0 right-0 h-px bg-white/50" />
                   <div className="absolute inset-3 rounded-full border border-white/30" />
-                  <div className="absolute inset-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/80" />
+                  <div className="absolute inset-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-apple-400/80" />
                 </div>
               </div>
 
-              {/* 顶部方位刻度 */}
-              <div className="pointer-events-none absolute top-0 left-0 right-0 pt-2 pb-2 px-4 flex items-end justify-between text-mist/70 text-[11px] tracking-widest font-mono bg-gradient-to-b from-black/40 to-transparent">
+              {/* 顶部方位刻度 —— 暗玻璃 */}
+              <div className="pointer-events-none absolute top-0 left-0 right-0 pt-2 pb-2 px-4 flex items-end justify-between text-cheese-50/70 text-[11px] tracking-widest font-mono bg-gradient-to-b from-black/40 to-transparent">
                 <span>◀ {leftAz(currentHeading - 60)}</span>
-                <span className="text-gold">▲ {az(currentHeading)}</span>
+                <span className="text-apple-400">▲ {az(currentHeading)}</span>
                 <span>{rightAz(currentHeading + 60)} ▶</span>
               </div>
 
@@ -418,48 +418,48 @@ export default function ArPage() {
                 )
               })}
 
-              {/* AR 山峰信息卡（模拟模式）—— 半透明玻璃信息卡 */}
+              {/* AR 山峰信息卡（模拟模式）—— 暗玻璃 + 青苹果强调 */}
               {selectedPeakId && visible.some(v => v.peakId === selectedPeakId) && (() => {
                 const peak = getPeakById(selectedPeakId)
                 if (!peak) return null
                 const vpeak = visible.find(v => v.peakId === selectedPeakId)!
                 return (
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-30 w-[90%] max-w-sm animate-enter-fade">
-                    <div className="glass-panel rounded-2xl p-4 shadow-2xl">
+                    <div className="glass-dark rounded-2xl p-4 shadow-deep">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="font-serif text-mist text-lg font-semibold">{peak.name}</h3>
-                          <p className="mt-0.5 text-gold text-xs font-medium tabular-nums">{peak.elevation} m</p>
+                          <h3 className="font-serif text-cheese-50 text-lg font-semibold">{peak.name}</h3>
+                          <p className="mt-0.5 text-apple-400 text-xs font-medium tabular-nums">{peak.elevation} m</p>
                         </div>
                         <button
                           onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }}
-                          className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-mist/60 hover:text-mist transition"
+                          className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-cheese-50/60 hover:text-cheese-50 transition"
                           aria-label="关闭"
                         >
                           <X size={14} />
                         </button>
                       </div>
-                      <div className="mt-3 flex items-center gap-4 text-[11px] text-mist/70">
+                      <div className="mt-3 flex items-center gap-4 text-[11px] text-cheese-50/70">
                         <span className="flex items-center gap-1.5 tabular-nums">
-                          <MapPin size={11} className="text-moss" />
+                          <MapPin size={11} className="text-apple-400" />
                           距离 {vpeak.distanceKm.toFixed(1)} km
                         </span>
                         <span className="flex items-center gap-1.5 tabular-nums">
-                          <Compass size={11} className="text-moss" />
+                          <Compass size={11} className="text-apple-400" />
                           {azimuthCompassShort(vpeak.azimuthDeg)} {Math.round(vpeak.azimuthDeg)}°
                         </span>
                       </div>
                       {viewshedResult && (
-                        <div className={`mt-3 pt-3 border-t border-white/10 text-xs ${viewshedResult.visible ? 'text-moss' : 'text-red-400'}`}>
+                        <div className={`mt-3 pt-3 border-t border-white/10 text-xs ${viewshedResult.visible ? 'text-apple-400' : 'text-amber-400'}`}>
                           <div className="flex items-center gap-1.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${viewshedResult.visible ? 'bg-moss' : 'bg-red-500'} pulse-dot`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${viewshedResult.visible ? 'bg-apple-400' : 'bg-amber-400'} pulse-dot`} />
                             {viewshedResult.visible ? '可见 · 无地形遮挡' : '不可见 · 被地形遮挡'}
                           </div>
-                          <div className="mt-1 text-[10px] text-mist/50 tabular-nums">
+                          <div className="mt-1 text-[10px] text-cheese-50/50 tabular-nums">
                             距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m
                           </div>
                           {viewshedResult.obstruction && (
-                            <div className="mt-1 text-[10px] text-red-400/80 leading-relaxed">
+                            <div className="mt-1 text-[10px] text-amber-400/80 leading-relaxed">
                               在 {formatDistanceM(viewshedResult.obstruction.distance)} 处地形超出视线 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
                             </div>
                           )}
@@ -468,11 +468,11 @@ export default function ArPage() {
                       <button
                         onClick={() => handleViewshed(selectedPeakId)}
                         disabled={viewshedLoading}
-                        className="mt-3 w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-gold/90 text-ink text-xs font-semibold hover:bg-gold disabled:opacity-60 transition active:scale-[0.98]"
+                        className="mt-3 w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-apple-400 text-cheese-50 text-xs font-semibold hover:bg-apple-300 disabled:opacity-60 transition active:scale-[0.98] shadow-apple"
                       >
                         {viewshedLoading ? (
                           <>
-                            <span className="w-3.5 h-3.5 rounded-full border-2 border-ink/40 border-t-ink animate-spin" />
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-cheese-50/40 border-t-cheese-50 animate-spin" />
                             分析中…
                           </>
                         ) : (
@@ -488,15 +488,15 @@ export default function ArPage() {
                 )
               })()}
 
-              {/* 底部 —— 摄像头入口 + 山峰数 */}
-              <div className="absolute left-0 right-0 bottom-0 h-16 px-4 flex items-center justify-between bg-gradient-to-t from-ink/80 to-transparent">
-                <span className="text-mist/70 text-[11px]">
-                  共 <span className="text-mist font-medium">{visible.length}</span> 座可见
+              {/* 底部 —— 摄像头入口 + 山峰数（暗玻璃，与取景器场景同色） */}
+              <div className="absolute left-0 right-0 bottom-0 h-16 px-4 flex items-center justify-between bg-gradient-to-t from-black/60 to-transparent">
+                <span className="text-cheese-50/70 text-[11px]">
+                  共 <span className="text-cheese-50 font-medium">{visible.length}</span> 座可见
                 </span>
                 <button
                   type="button"
                   onClick={handleEnterCamera}
-                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full bg-gold text-ink text-xs font-semibold hover:bg-gold/90 transition active:scale-95 shadow-lg"
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full bg-apple-400 text-cheese-50 text-xs font-semibold hover:bg-apple-300 transition active:scale-95 shadow-apple"
                 >
                   <Camera size={13} />
                   打开摄像头
@@ -504,8 +504,8 @@ export default function ArPage() {
               </div>
             </div>
 
-            {/* 控制面板 —— 深色玻璃 */}
-            <div className="mt-4 glass-panel rounded-2xl p-4">
+            {/* 控制面板 —— 奶酪玻璃 */}
+            <div className="mt-4 glass-light rounded-2xl p-4 shadow-glass">
               {/* 方位切换 */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-1.5">
@@ -516,8 +516,8 @@ export default function ArPage() {
                       onClick={() => setHeading(k)}
                       className={`h-9 px-3.5 rounded-full text-xs border transition active:scale-95 ${
                         heading === k
-                          ? 'bg-mist text-ink border-mist font-medium'
-                          : 'bg-white/5 text-mist/80 border-white/15 hover:bg-white/10'
+                          ? 'bg-apple-400 text-cheese-50 border-apple-400 font-medium'
+                          : 'bg-cheese-50 text-apple-600 border-apple-400/30 hover:bg-apple-50'
                       }`}
                     >
                       {labelOf(k)}
@@ -527,14 +527,14 @@ export default function ArPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/viewshed')}
-                  className="text-xs text-gold hover:text-gold/80 whitespace-nowrap font-medium inline-flex items-center gap-1"
+                  className="text-xs text-apple-600 hover:text-apple-700 whitespace-nowrap font-medium inline-flex items-center gap-1"
                 >
                   视域分析 <ChevronRight size={12} />
                 </button>
               </div>
 
               {/* 空间感知按钮组 */}
-              <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
+              <div className="mt-3 pt-3 border-t border-apple-400/15 flex items-center gap-2 flex-wrap">
                 <SensingButton
                   label={location.status === 'watching' ? '停止定位' : '获取我的位置'}
                   icon={<MapPin size={13} />}
@@ -567,10 +567,10 @@ export default function ArPage() {
             )}
 
             {!isMobile && (
-              <div className="mt-4 glass-panel rounded-2xl p-4 text-[11px] text-mist/60 leading-relaxed">
-                <div className="font-medium mb-1 text-mist/80">提示</div>
+              <div className="mt-4 glass-light rounded-2xl p-4 text-caption text-ink-50 leading-relaxed shadow-glass">
+                <div className="font-medium mb-1 text-forest-600">提示</div>
                 <div>真实摄像头 / GPS / 方向传感器功能建议在手机上体验（同一 Wi-Fi + HTTPS 访问）。</div>
-                <div className="mt-1 text-mist/50">
+                <div className="mt-1 text-rock-400">
                   Stage 3 仅采集真实空间数据，山峰标签仍使用模拟位置 — Stage 4 才会根据真实 heading 让山峰跟随手机移动。
                 </div>
               </div>
@@ -584,7 +584,7 @@ export default function ArPage() {
 
 /* ========= 子组件 ========= */
 
-/** 空间感知主按钮（获取位置 / 开启方向感知）—— 深色玻璃风 */
+/** 空间感知主按钮 —— 奶酪玻璃风（仅用于模拟模式控制面板） */
 function SensingButton({
   label,
   icon,
@@ -605,8 +605,8 @@ function SensingButton({
       disabled={loading}
       className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-xs border transition active:scale-95 ${
         active
-          ? 'bg-gold/15 text-gold border-gold/40 font-medium'
-          : 'bg-white/5 text-mist/80 border-white/15 hover:bg-white/10'
+          ? 'bg-apple-100 text-apple-700 border-apple-400/40 font-medium'
+          : 'bg-cheese-50 text-ink-50 border-apple-400/30 hover:bg-apple-50'
       } ${loading ? 'opacity-60 pointer-events-none' : ''}`}
     >
       {loading ? <span className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" /> : icon}
@@ -615,7 +615,7 @@ function SensingButton({
   )
 }
 
-/** 正式 UI — GPS 状态 chip（接收 LocationProvider）—— 极简玻璃风 */
+/** 正式 UI — GPS 状态 chip（接收 LocationProvider）—— 暗玻璃风（摄像头场景用） */
 function GeoStatusChip({
   location,
   compact
@@ -630,11 +630,11 @@ function GeoStatusChip({
       <button
         type="button"
         onClick={() => location.stop()}
-        className={`inline-flex items-center gap-1.5 rounded-full glass-panel text-mist text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
+        className={`inline-flex items-center gap-1.5 rounded-full glass-dark text-cheese-50 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
         title={`精度 ${Math.round(location.accuracy ?? 5)}m`}
       >
-        <MapPin size={10} className="text-moss" />
-        <span className="w-1 h-1 rounded-full bg-moss pulse-dot" />
+        <MapPin size={10} className="text-apple-400" />
+        <span className="w-1 h-1 rounded-full bg-apple-400 pulse-dot" />
         {label}
       </button>
     )
@@ -643,7 +643,7 @@ function GeoStatusChip({
     <button
       type="button"
       onClick={() => location.start()}
-      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 text-mist/80 border border-white/15 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 text-cheese-50/80 border border-white/15 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
     >
       <MapPin size={10} />
       点此定位
@@ -651,7 +651,7 @@ function GeoStatusChip({
   )
 }
 
-/** 正式 UI — 方向状态 chip（接收 OrientationProvider）—— 极简玻璃风 */
+/** 正式 UI — 方向状态 chip（接收 OrientationProvider）—— 暗玻璃风 */
 function CompassStatusChip({
   orientation,
   compact
@@ -665,11 +665,11 @@ function CompassStatusChip({
       <button
         type="button"
         onClick={() => orientation.stop()}
-        className={`inline-flex items-center gap-1.5 rounded-full glass-panel text-mist text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
+        className={`inline-flex items-center gap-1.5 rounded-full glass-dark text-cheese-50 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
         title={`朝向 ${Math.round(orientation.heading)}°`}
       >
-        <Compass size={10} className="text-moss" />
-        <span className="w-1 h-1 rounded-full bg-moss pulse-dot" />
+        <Compass size={10} className="text-apple-400" />
+        <span className="w-1 h-1 rounded-full bg-apple-400 pulse-dot" />
         {label}{Math.round(orientation.heading)}°
       </button>
     )
@@ -678,7 +678,7 @@ function CompassStatusChip({
     <button
       type="button"
       onClick={() => orientation.start()}
-      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 text-mist/80 border border-white/15 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 text-cheese-50/80 border border-white/15 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
     >
       <Compass size={10} />
       点此开启
@@ -686,7 +686,7 @@ function CompassStatusChip({
   )
 }
 
-/** 开发调试面板（接收 Provider）—— 深色风 */
+/** 开发调试面板（接收 Provider）—— 奶酪玻璃风（模拟模式控制面板用） */
 function DebugPanel({
   location,
   orientation,
@@ -699,15 +699,15 @@ function DebugPanel({
   hasRealAR: boolean
 }) {
   return (
-    <div className="mt-4 glass-panel rounded-2xl p-4 text-[11px]">
-      <div className="text-[10px] text-gold font-medium mb-2 tracking-wider">
+    <div className="mt-4 glass-light rounded-2xl p-4 text-caption shadow-glass">
+      <div className="text-overline text-apple-600 font-semibold mb-2 tracking-wider">
         开发调试面板（DEV ONLY）
       </div>
       <div className="grid grid-cols-2 gap-3">
         {/* GPS 区块 */}
         <div>
-          <div className="text-[10px] text-mist/40 mb-1">GPS{location.isMock ? ' (模拟)' : ''}</div>
-          <div className="font-mono leading-tight text-mist/90">
+          <div className="text-overline text-rock-400 mb-1">GPS{location.isMock ? ' (模拟)' : ''}</div>
+          <div className="font-mono leading-tight text-ink">
             <Line label="状态" value={location.status} />
             {location.latLng && (
               <>
@@ -723,8 +723,8 @@ function DebugPanel({
         </div>
         {/* Compass 区块 */}
         <div>
-          <div className="text-[10px] text-mist/40 mb-1">方向传感器{orientation.isMock ? ' (模拟)' : ''}</div>
-          <div className="font-mono leading-tight text-mist/90">
+          <div className="text-overline text-rock-400 mb-1">方向传感器{orientation.isMock ? ' (模拟)' : ''}</div>
+          <div className="font-mono leading-tight text-ink">
             <Line label="状态" value={orientation.status} />
             <Line label="自动旋转" value={orientation.isAutoRotating ? 'YES' : 'NO'} />
             {orientation.heading != null && (
@@ -735,22 +735,22 @@ function DebugPanel({
       </div>
 
       {/* Stage 4 AR 计算结果 */}
-      <div className="mt-3 pt-3 border-t border-white/10">
-        <div className="text-[10px] text-mist/40 mb-1 flex items-center justify-between">
+      <div className="mt-3 pt-3 border-t border-apple-400/15">
+        <div className="text-overline text-rock-400 mb-1 flex items-center justify-between">
           <span>Stage 4 AR 山峰定位</span>
-          <span className={hasRealAR ? 'text-moss' : 'text-mist/50'}>
+          <span className={hasRealAR ? 'text-apple-600' : 'text-rock-400'}>
             {hasRealAR ? '● 实时' : '○ 待 位置+Heading'}
           </span>
         </div>
-        <div className="text-[10px] text-mist/40 mb-1">
+        <div className="text-overline text-rock-400 mb-1">
           FOV {overlay.fov}° · 共 {overlay.items.length} 座 · 视野内 {overlay.items.filter(i => i.inFOV).length}
         </div>
-        <div className="space-y-0.5 font-mono leading-tight text-mist/90 max-h-32 overflow-auto">
+        <div className="space-y-0.5 font-mono leading-tight text-ink max-h-32 overflow-auto">
           {overlay.items.length === 0 && (
-            <div className="text-mist/30">暂无山峰数据（开启测试模式或获取真实 GPS+方向）</div>
+            <div className="text-rock-400">暂无山峰数据（开启测试模式或获取真实 GPS+方向）</div>
           )}
           {overlay.items.map((it) => (
-            <div key={it.peak.id} className={`flex justify-between gap-2 text-[10px] ${it.inFOV ? '' : 'text-mist/30'}`}>
+            <div key={it.peak.id} className={`flex justify-between gap-2 text-overline ${it.inFOV ? '' : 'text-rock-400'}`}>
               <span>{it.peak.name}</span>
               <span>
                 {Math.round(it.bearingDeg)}° · {it.distanceKm.toFixed(1)}km · rel{it.relativeDeg > 0 ? '+' : ''}{Math.round(it.relativeDeg)}° · x{it.screenXPercent.toFixed(0)}% {it.inFOV ? '' : '(OUT)'}
@@ -762,7 +762,7 @@ function DebugPanel({
 
       {/* 简易指南针可视化 */}
       {orientation.heading != null && (
-        <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-center">
+        <div className="mt-3 pt-3 border-t border-apple-400/15 flex items-center justify-center">
           <CompassVisual heading={orientation.heading} />
         </div>
       )}
@@ -773,35 +773,35 @@ function DebugPanel({
 function Line({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex justify-between gap-3">
-      <span className="text-mist/40">{label}</span>
+      <span className="text-rock-400">{label}</span>
       <span className="text-right">{value}</span>
     </div>
   )
 }
 
-/** 简易指南针可视化 —— 圆形 + 箭头 + 方位 */
+/** 简易指南针可视化 —— 圆形 + 箭头 + 方位（奶酪玻璃风） */
 function CompassVisual({ heading }: { heading: number }) {
   const dir = headingToDirection(heading)
   return (
-    <div className="relative w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+    <div className="relative w-24 h-24 rounded-full bg-cheese-50 border border-apple-400/30 flex items-center justify-center">
       {/* 方位文字 */}
-      <span className="absolute top-1 text-[10px] text-mist/60">N</span>
-      <span className="absolute bottom-1 text-[10px] text-mist/60">S</span>
-      <span className="absolute left-1 text-[10px] text-mist/60">W</span>
-      <span className="absolute right-1 text-[10px] text-mist/60">E</span>
+      <span className="absolute top-1 text-overline text-ink-50">N</span>
+      <span className="absolute bottom-1 text-overline text-ink-50">S</span>
+      <span className="absolute left-1 text-overline text-ink-50">W</span>
+      <span className="absolute right-1 text-overline text-ink-50">E</span>
       {/* 箭头 */}
       <div
         className="absolute inset-2 flex items-center justify-center transition-transform duration-100"
         style={{ transform: `rotate(${heading}deg)` }}
       >
-        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[22px] border-l-transparent border-r-transparent border-b-gold" />
+        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[22px] border-l-transparent border-r-transparent border-b-apple-500" />
       </div>
       {/* 中心数字 */}
-      <span className="relative z-10 text-xs font-bold text-mist font-mono">
+      <span className="relative z-10 text-xs font-bold text-forest-600 font-mono">
         {Math.round(heading)}°
       </span>
       {/* 方位 */}
-      <span className="absolute bottom-4 text-[9px] text-mist/70 font-medium">{dir}</span>
+      <span className="absolute bottom-4 text-[9px] text-apple-600 font-medium">{dir}</span>
     </div>
   )
 }
@@ -811,7 +811,7 @@ function headingToDirection(heading: number): string {
   return ['北', '东北', '东', '东南', '南', '西南', '西', '西北'][idx]
 }
 
-/** 摄像头模式底部 dev 小面板 */
+/** 摄像头模式底部 dev 小面板（暗色场景） */
 function DevPanel({
   camera,
   location,
@@ -824,7 +824,7 @@ function DevPanel({
   isMobile: boolean
 }) {
   return (
-    <div className="flex flex-col items-end gap-0.5 text-mist/50 text-[9px] leading-tight font-mono text-right">
+    <div className="flex flex-col items-end gap-0.5 text-cheese-50/50 text-[9px] leading-tight font-mono text-right">
       <span>cam · {camera.status}</span>
       <span>{location.isMock ? 'MOCK ' : ''}{location.latLng ? `${location.latLng.lat.toFixed(4)}, ${location.latLng.lng.toFixed(4)}` : location.status}</span>
       <span>{orientation.isMock ? 'MOCK ' : ''}{orientation.heading != null ? `${Math.round(orientation.heading)}°` : orientation.status}</span>

@@ -126,8 +126,8 @@ export default function ViewshedPage() {
     return (
       <PageContainer>
         <div className="py-16 text-center">
-          <div className="font-serif text-mist text-xl mb-2">山峰未找到</div>
-          <Link to="/" className="text-gold text-sm hover:underline">返回首页</Link>
+          <div className="font-serif text-forest-700 text-xl mb-2">山峰未找到</div>
+          <Link to="/" className="text-apple-600 text-sm hover:underline">返回首页</Link>
         </div>
       </PageContainer>
     )
@@ -137,73 +137,73 @@ export default function ViewshedPage() {
   const showResult = terrainMode === 'mock' || isDemReady
 
   return (
-    <div className="min-h-screen bg-ink text-mist">
+    <div className="min-h-screen bg-cheese text-ink pb-20">
       <PageContainer className="safe-top">
-        {/* 标题区 */}
+        {/* ===== 标题区 ===== */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 text-[10px] text-gold tracking-[0.2em] uppercase mb-2">
+          <div className="flex items-center gap-2 text-overline text-apple-600 tracking-[0.2em] font-semibold mb-2">
             <Crosshair size={11} />
             GIS 视域分析
           </div>
-          <h1 className="font-serif text-mist text-2xl font-semibold">
+          <h1 className="font-serif text-forest-700 text-2xl font-bold">
             {result.visible ? '可以看到' : '无法看到'}
-            <span className="text-gold"> {peak.name}</span>
+            <span className="text-apple-600"> {peak.name}</span>
           </h1>
-          <p className="mt-1.5 text-xs text-rock">基于 DEM 地形进行视线分析 · LOS (Line of Sight) 算法</p>
+          <p className="mt-1.5 text-sm text-ink-50">基于 DEM 地形进行视线分析 · LOS (Line of Sight) 算法</p>
 
           {/* 数据来源标识 */}
           <div className="mt-3">
             {isDemReady ? (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-moss glass-panel rounded-full px-2.5 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-moss pulse-dot" />
+              <span className="inline-flex items-center gap-1.5 text-caption text-apple-700 glass-light rounded-full px-2.5 py-1 border border-apple-400/30 shadow-glass">
+                <span className="w-1.5 h-1.5 rounded-full bg-apple-500 pulse-dot" />
                 基于真实 DEM 分析
               </span>
             ) : terrainMode === 'dem' && demStatus === 'loading' ? (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-gold glass-panel rounded-full px-2.5 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 text-caption text-apple-600 glass-light rounded-full px-2.5 py-1 border border-apple-400/30 shadow-glass">
+                <span className="w-1.5 h-1.5 rounded-full bg-apple-500 animate-pulse" />
                 DEM 加载中…
               </span>
             ) : terrainMode === 'dem' && demStatus === 'error' ? (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-red-400 glass-panel rounded-full px-2.5 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <span className="inline-flex items-center gap-1.5 text-caption text-amber-400 glass-light rounded-full px-2.5 py-1 border border-amber-400/30 shadow-glass">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                 DEM 加载失败：{demError}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-rock glass-panel rounded-full px-2.5 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-rock" />
+              <span className="inline-flex items-center gap-1.5 text-caption text-rock-400 glass-light rounded-full px-2.5 py-1 border border-rock-200/40 shadow-glass">
+                <span className="w-1.5 h-1.5 rounded-full bg-rock-400" />
                 演示模式（模拟地形）
               </span>
             )}
           </div>
         </section>
 
-        {/* 正式可视化区域 */}
+        {/* ===== 正式可视化区域 ===== */}
         {showResult && (
           <section className="space-y-4">
             {/* 观察点 + 目标山峰 双栏 */}
             <div className="grid grid-cols-2 gap-3">
               {/* 观察点 */}
-              <div className="glass-panel rounded-2xl p-4">
-                <div className="flex items-center gap-1.5 text-[10px] text-rock tracking-wider mb-2 uppercase">
-                  <MapPin size={11} className="text-moss" />
+              <div className="glass-light rounded-2xl p-4 shadow-card">
+                <div className="flex items-center gap-1.5 text-overline text-apple-600 tracking-wider mb-2 font-semibold">
+                  <MapPin size={11} />
                   观察点
                 </div>
-                <div className="space-y-1.5 text-xs">
+                <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-rock">地面海拔</span>
-                    <span className="text-mist font-medium tabular-nums">
+                    <span className="text-rock-400">地面海拔</span>
+                    <span className="text-ink font-medium tabular-nums">
                       {(effectiveObserver.elevation - OBSERVER_EYE_HEIGHT).toFixed(1)} m
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-rock">人眼高度</span>
-                    <span className="text-mist/70 tabular-nums">+ {OBSERVER_EYE_HEIGHT} m</span>
+                    <span className="text-rock-400">人眼高度</span>
+                    <span className="text-ink-50 tabular-nums">+ {OBSERVER_EYE_HEIGHT} m</span>
                   </div>
-                  <div className="pt-1.5 border-t border-white/10">
-                    <div className="text-[10px] text-rock/60 font-mono">
+                  <div className="pt-1.5 border-t border-apple-400/15">
+                    <div className="text-overline text-rock-400 font-mono">
                       {effectiveObserver.lat.toFixed(4)}°N
                     </div>
-                    <div className="text-[10px] text-rock/60 font-mono">
+                    <div className="text-overline text-rock-400 font-mono">
                       {effectiveObserver.lng.toFixed(4)}°E
                     </div>
                   </div>
@@ -211,25 +211,25 @@ export default function ViewshedPage() {
               </div>
 
               {/* 目标山峰 */}
-              <div className="glass-panel rounded-2xl p-4">
-                <div className="flex items-center gap-1.5 text-[10px] text-rock tracking-wider mb-2 uppercase">
-                  <Mountain size={11} className="text-gold" />
+              <div className="glass-light rounded-2xl p-4 shadow-card">
+                <div className="flex items-center gap-1.5 text-overline text-apple-600 tracking-wider mb-2 font-semibold">
+                  <Mountain size={11} />
                   目标山峰
                 </div>
-                <div className="space-y-1.5 text-xs">
+                <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-rock">名称</span>
-                    <span className="text-mist font-medium">{peak.name}</span>
+                    <span className="text-rock-400">名称</span>
+                    <span className="text-ink font-medium">{peak.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-rock">海拔</span>
-                    <span className="text-gold font-medium tabular-nums">{peak.elevation} m</span>
+                    <span className="text-rock-400">海拔</span>
+                    <span className="text-apple-600 font-medium tabular-nums">{peak.elevation} m</span>
                   </div>
-                  <div className="pt-1.5 border-t border-white/10">
-                    <div className="text-[10px] text-rock/60 font-mono">
+                  <div className="pt-1.5 border-t border-apple-400/15">
+                    <div className="text-overline text-rock-400 font-mono">
                       {peak.lat.toFixed(4)}°N
                     </div>
-                    <div className="text-[10px] text-rock/60 font-mono">
+                    <div className="text-overline text-rock-400 font-mono">
                       {peak.lng.toFixed(4)}°E
                     </div>
                   </div>
@@ -238,12 +238,12 @@ export default function ViewshedPage() {
             </div>
 
             {/* 视线分析结果 */}
-            <div className={`glass-panel rounded-2xl p-4 ${
-              result.visible ? 'border-moss/30' : 'border-red-500/30'
+            <div className={`glass-light rounded-2xl p-4 shadow-card ${
+              result.visible ? 'border-apple-400/40' : 'border-amber-400/40'
             }`}>
               <div className="flex items-center gap-2 mb-4">
-                <span className={`w-2.5 h-2.5 rounded-full ${result.visible ? 'bg-moss' : 'bg-red-500'} pulse-dot`} />
-                <span className={`text-sm font-medium ${result.visible ? 'text-moss' : 'text-red-400'}`}>
+                <span className={`w-2.5 h-2.5 rounded-full ${result.visible ? 'bg-apple-500' : 'bg-amber-400'} pulse-dot`} />
+                <span className={`text-sm font-semibold ${result.visible ? 'text-apple-700' : 'text-amber-400'}`}>
                   {result.visible ? '当前视线无遮挡' : '当前视线被地形遮挡'}
                 </span>
               </div>
@@ -251,25 +251,25 @@ export default function ViewshedPage() {
               {/* 核心数据 */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <div className="text-[10px] text-rock tracking-wider mb-1">视线距离</div>
-                  <div className="text-mist font-medium tabular-nums text-sm">{formatDistanceM(result.distance)}</div>
+                  <div className="text-overline text-rock-400 tracking-wider mb-1 font-semibold">视线距离</div>
+                  <div className="text-ink font-medium tabular-nums text-base">{formatDistanceM(result.distance)}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-rock tracking-wider mb-1">相对高度</div>
-                  <div className={`font-medium tabular-nums text-sm ${result.elevationDifference > 0 ? 'text-gold' : 'text-moss'}`}>
+                  <div className="text-overline text-rock-400 tracking-wider mb-1 font-semibold">相对高度</div>
+                  <div className={`font-medium tabular-nums text-base ${result.elevationDifference > 0 ? 'text-apple-600' : 'text-amber-400'}`}>
                     {result.elevationDifference > 0 ? '+' : ''}{result.elevationDifference.toFixed(1)} m
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-rock tracking-wider mb-1">方位角</div>
-                  <div className="text-mist font-medium tabular-nums text-sm">{Math.round(result.bearing)}°</div>
+                  <div className="text-overline text-rock-400 tracking-wider mb-1 font-semibold">方位角</div>
+                  <div className="text-ink font-medium tabular-nums text-base">{Math.round(result.bearing)}°</div>
                 </div>
               </div>
 
               {/* 遮挡信息 */}
               {result.obstruction ? (
-                <div className="mt-4 pt-4 border-t border-red-500/20 text-xs text-red-400/90 leading-relaxed">
-                  在距离你约 <span className="font-medium tabular-nums text-red-400">{formatDistanceM(result.obstruction.distance)}</span> 处，
+                <div className="mt-4 pt-4 border-t border-amber-400/20 text-sm text-amber-400 leading-relaxed">
+                  在距离你约 <span className="font-medium tabular-nums text-amber-400">{formatDistanceM(result.obstruction.distance)}</span> 处，
                   地形高度（<span className="tabular-nums">{result.obstruction.terrainElevation} m</span>）
                   超过了视线高度
                   （<span className="tabular-nums">{result.obstruction.lineOfSightElevation} m</span>），
@@ -277,33 +277,33 @@ export default function ViewshedPage() {
                   因此{peak.name}被山体遮挡。
                 </div>
               ) : (
-                <div className="mt-4 pt-4 border-t border-moss/20 text-xs text-moss/80 leading-relaxed">
+                <div className="mt-4 pt-4 border-t border-apple-400/20 text-sm text-apple-700 leading-relaxed">
                   你与{peak.name}之间没有明显地形遮挡，因此从当前位置可以看到{peak.name}。
                 </div>
               )}
             </div>
 
             {/* 地形剖面图 */}
-            <div className="glass-panel rounded-2xl p-4">
+            <div className="glass-light rounded-2xl p-4 shadow-card">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="flex items-center gap-1.5 text-sm font-medium text-mist">
-                    <BarChart3 size={13} className="text-moss" />
+                  <div className="flex items-center gap-1.5 text-sm font-semibold text-forest-600">
+                    <BarChart3 size={13} className="text-apple-500" />
                     视线方向地形剖面
                   </div>
-                  <div className="text-[10px] text-rock mt-0.5">
+                  <div className="text-overline text-rock-400 mt-0.5">
                     横轴：距离 (m) · 纵轴：海拔 (m){isDemReady ? ' · 真实 DEM 采样' : ''}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 text-[10px]">
-                  <span className="inline-flex items-center gap-1.5 text-moss">
-                    <i className="w-5 h-0.5 bg-moss" style={{ borderTop: '1px dashed #8DAA91' }} /> 观察点视线
+                <div className="flex flex-col items-end gap-1 text-overline">
+                  <span className="inline-flex items-center gap-1.5 text-apple-600">
+                    <span className="w-5 h-0.5" style={{ borderTop: '1px dashed #8DB838' }} /> 观察点视线
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-gold">
-                    <i className="w-5 h-1 bg-gold/60 rounded-sm" /> DEM 地形
+                  <span className="inline-flex items-center gap-1.5 text-apple-700">
+                    <span className="w-5 h-1 bg-apple-300 rounded-sm" /> DEM 地形
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-red-400">
-                    <i className="w-2 h-2 rounded-full bg-red-500" /> 遮挡点
+                  <span className="inline-flex items-center gap-1.5 text-amber-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" /> 遮挡点
                   </span>
                 </div>
               </div>
@@ -317,22 +317,22 @@ export default function ViewshedPage() {
 
         {/* DEV: 测试面板 */}
         {import.meta.env.DEV && (
-          <section className="mt-6 glass-panel rounded-2xl p-4 border-gold/20">
-            <div className="text-[10px] text-gold font-medium tracking-wider mb-3">
+          <section className="mt-6 glass-light rounded-2xl p-4 shadow-card border border-apple-400/20">
+            <div className="text-overline text-apple-600 font-semibold tracking-wider mb-3">
               视域分析测试面板（DEV ONLY）
             </div>
 
             {/* 地形模式切换 */}
             <div className="mb-4">
-              <div className="text-[10px] text-rock mb-1.5">地形数据来源</div>
+              <div className="text-overline text-rock-400 mb-1.5">地形数据来源</div>
               <div className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={() => setTerrainMode('dem')}
-                  className={`h-7 px-2.5 rounded text-[10px] border transition ${
+                  className={`h-8 px-3 rounded text-overline border transition ${
                     terrainMode === 'dem'
-                      ? 'bg-gold text-ink border-gold font-medium'
-                      : 'bg-white/5 text-mist/70 border-white/15 hover:bg-white/10'
+                      ? 'bg-apple-400 text-cheese-50 border-apple-400 font-medium'
+                      : 'bg-cheese-50 text-apple-600 border-apple-400/30 hover:bg-apple-50'
                   }`}
                 >
                   真实 DEM
@@ -340,10 +340,10 @@ export default function ViewshedPage() {
                 <button
                   type="button"
                   onClick={() => setTerrainMode('mock')}
-                  className={`h-7 px-2.5 rounded text-[10px] border transition ${
+                  className={`h-8 px-3 rounded text-overline border transition ${
                     terrainMode === 'mock'
-                      ? 'bg-gold text-ink border-gold font-medium'
-                      : 'bg-white/5 text-mist/70 border-white/15 hover:bg-white/10'
+                      ? 'bg-apple-400 text-cheese-50 border-apple-400 font-medium'
+                      : 'bg-cheese-50 text-apple-600 border-apple-400/30 hover:bg-apple-50'
                   }`}
                 >
                   模拟地形
@@ -353,10 +353,10 @@ export default function ViewshedPage() {
 
             {/* DEM Debug Panel — 单点高程查询 */}
             {terrainMode === 'dem' && (
-              <div className="mb-4 pt-3 border-t border-white/10">
-                <div className="text-[10px] text-rock mb-1.5">DEM 单点高程查询</div>
+              <div className="mb-4 pt-3 border-t border-apple-400/15">
+                <div className="text-overline text-rock-400 mb-1.5">DEM 单点高程查询</div>
                 {demProvider.latLngBBox && (
-                  <div className="text-[10px] text-rock/60 font-mono mb-2">
+                  <div className="text-overline text-rock-400 font-mono mb-2">
                     DEM 范围: 纬度 {demProvider.latLngBBox[0].toFixed(4)}~{demProvider.latLngBBox[2].toFixed(4)}, 经度 {demProvider.latLngBBox[1].toFixed(4)}~{demProvider.latLngBBox[3].toFixed(4)}
                   </div>
                 )}
@@ -366,7 +366,7 @@ export default function ViewshedPage() {
                     step="0.000001"
                     value={debugLat}
                     onChange={(e) => setDebugLat(e.target.value)}
-                    className="w-24 h-7 px-1.5 text-[10px] border border-white/15 rounded bg-white/5 font-mono text-mist"
+                    className="w-24 h-8 px-2 text-overline border border-apple-400/30 rounded bg-cheese-50 font-mono text-ink focus:outline-none focus:border-apple-400"
                     placeholder="Lat"
                   />
                   <input
@@ -374,25 +374,25 @@ export default function ViewshedPage() {
                     step="0.000001"
                     value={debugLng}
                     onChange={(e) => setDebugLng(e.target.value)}
-                    className="w-24 h-7 px-1.5 text-[10px] border border-white/15 rounded bg-white/5 font-mono text-mist"
+                    className="w-24 h-8 px-2 text-overline border border-apple-400/30 rounded bg-cheese-50 font-mono text-ink focus:outline-none focus:border-apple-400"
                     placeholder="Lng"
                   />
                   <button
                     type="button"
                     onClick={queryDebugElevation}
                     disabled={!demProvider.isReady}
-                    className="h-7 px-2 rounded text-[10px] bg-moss/20 text-moss hover:bg-moss/30 disabled:opacity-40"
+                    className="h-8 px-3 rounded text-overline bg-apple-100 text-apple-700 hover:bg-apple-200 disabled:opacity-40 font-medium border border-apple-400/30"
                   >
                     查询
                   </button>
                 </div>
                 {debugResult != null && (
-                  <div className="mt-1 text-[10px] text-moss font-mono">
+                  <div className="mt-1 text-overline text-apple-700 font-mono">
                     DEM Elevation: <span className="font-bold">{debugResult} m</span>
                   </div>
                 )}
                 {debugResult === null && terrainMode === 'dem' && demProvider.isReady && (
-                  <div className="mt-1 text-[10px] text-red-400">
+                  <div className="mt-1 text-overline text-amber-400">
                     坐标超出 DEM 范围
                   </div>
                 )}
@@ -403,7 +403,7 @@ export default function ViewshedPage() {
             {terrainMode === 'mock' && (
               <>
                 <div className="mb-4">
-                  <div className="text-[10px] text-rock mb-1.5">选择测试场景</div>
+                  <div className="text-overline text-rock-400 mb-1.5">选择测试场景</div>
                   <div className="flex flex-wrap gap-1.5">
                     {([
                       { id: 'auto', label: '自动（无遮挡）' },
@@ -414,10 +414,10 @@ export default function ViewshedPage() {
                         key={opt.id}
                         type="button"
                         onClick={() => setTestMode(opt.id)}
-                        className={`h-7 px-2.5 rounded text-[10px] border transition ${
+                        className={`h-8 px-3 rounded text-overline border transition ${
                           testMode === opt.id
-                            ? 'bg-gold text-ink border-gold font-medium'
-                            : 'bg-white/5 text-mist/70 border-white/15 hover:bg-white/10'
+                            ? 'bg-apple-400 text-cheese-50 border-apple-400 font-medium'
+                            : 'bg-cheese-50 text-apple-600 border-apple-400/30 hover:bg-apple-50'
                         }`}
                       >
                         {opt.label}
@@ -428,8 +428,8 @@ export default function ViewshedPage() {
 
                 {testMode === 'custom' && (
                   <div className="mb-4">
-                    <div className="text-[10px] text-rock mb-1.5">
-                      模拟山脊高度：<span className="font-mono text-gold">{customRidgeHeight} m</span>
+                    <div className="text-overline text-rock-400 mb-1.5">
+                      模拟山脊高度：<span className="font-mono text-apple-600 font-bold">{customRidgeHeight} m</span>
                     </div>
                     <input
                       type="range"
@@ -438,20 +438,20 @@ export default function ViewshedPage() {
                       step={50}
                       value={customRidgeHeight}
                       onChange={(e) => setCustomRidgeHeight(Number(e.target.value))}
-                      className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                      className="w-full h-1.5 bg-apple-100 rounded-lg appearance-none cursor-pointer accent-apple-500"
                     />
                     <div className="mt-3">
-                      <div className="text-[10px] text-rock mb-1.5">选择观察位置</div>
+                      <div className="text-overline text-rock-400 mb-1.5">选择观察位置</div>
                       <div className="flex flex-wrap gap-1.5">
                         {testObserverPositions.map((pos) => (
                           <button
                             key={pos.id}
                             type="button"
                             onClick={() => setSelectedObserverId(pos.id)}
-                            className={`h-7 px-2.5 rounded text-[10px] border transition ${
+                            className={`h-8 px-3 rounded text-overline border transition ${
                               selectedObserverId === pos.id
-                                ? 'bg-gold text-ink border-gold font-medium'
-                                : 'bg-white/5 text-mist/70 border-white/15 hover:bg-white/10'
+                                ? 'bg-apple-400 text-cheese-50 border-apple-400 font-medium'
+                                : 'bg-cheese-50 text-apple-600 border-apple-400/30 hover:bg-apple-50'
                             }`}
                           >
                             {pos.name}
@@ -465,11 +465,11 @@ export default function ViewshedPage() {
             )}
 
             {/* Debug 信息 */}
-            <div className="mt-3 pt-3 border-t border-white/10 font-mono text-[10px] leading-tight text-rock/70">
+            <div className="mt-3 pt-3 border-t border-apple-400/15 font-mono text-overline leading-tight text-rock-400">
               <div>Observer: {effectiveObserver.lat.toFixed(6)}, {effectiveObserver.lng.toFixed(6)} | elev={(effectiveObserver.elevation - OBSERVER_EYE_HEIGHT).toFixed(1)}m + eye {OBSERVER_EYE_HEIGHT}m = {effectiveObserver.elevation.toFixed(1)}m</div>
               <div>Target: {target.lat.toFixed(6)}, {target.lng.toFixed(6)} | elev={target.elevation}m</div>
               <div>Distance: {Math.round(result.distance)}m | ElevDiff: {result.elevationDifference.toFixed(1)}m | Bearing: {Math.round(result.bearing)}°</div>
-              <div>Visible: <span className={result.visible ? 'text-moss font-bold' : 'text-red-400 font-bold'}>{String(result.visible).toUpperCase()}</span></div>
+              <div>Visible: <span className={result.visible ? 'text-apple-700 font-bold' : 'text-amber-400 font-bold'}>{String(result.visible).toUpperCase()}</span></div>
               {result.obstruction && (
                 <div>Obstruction: dist={Math.round(result.obstruction.distance)}m terrain={result.obstruction.terrainElevation}m los={result.obstruction.lineOfSightElevation}m exceed={result.obstruction.exceedAmount}m</div>
               )}
@@ -482,14 +482,14 @@ export default function ViewshedPage() {
         <section className="mt-8 mb-8 flex flex-col sm:flex-row gap-3">
           <Link
             to={`/peak/${peakId}`}
-            className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-gold text-ink text-sm font-semibold hover:bg-gold/90 transition active:scale-95"
+            className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-apple-400 text-cheese-50 text-sm font-semibold hover:bg-apple-300 transition active:scale-95 shadow-apple"
           >
             <ArrowLeft size={15} />
             返回 {peak.name} 详情
           </Link>
           <Link
             to="/ar"
-            className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full glass-panel text-mist text-sm font-medium hover:bg-white/10 transition active:scale-95"
+            className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-cheese-50 text-apple-600 border border-apple-400/40 text-sm font-medium hover:bg-apple-50 transition active:scale-95"
           >
             返回 AR 看山
           </Link>

@@ -1,12 +1,16 @@
 import { ReactNode } from 'react'
 
-type Tone = 'forest' | 'gold' | 'rock' | 'moss'
+type Tone = 'apple' | 'amber' | 'forest' | 'rock'
 
 const tones: Record<Tone, string> = {
-  forest: 'bg-forest-900/40 text-moss-300 border-forest-700/40',
-  gold: 'bg-gold-200/15 text-gold-200 border-gold-200/30',
-  rock: 'bg-white/5 text-rock-300 border-white/10',
-  moss: 'bg-moss-300/15 text-moss-300 border-moss-300/30',
+  // 青苹果标签 — 主标签/CTA 旁注
+  apple:   'bg-apple-100 text-apple-700 border-apple-400/40',
+  // 暮色橙 — 警示/数据高亮
+  amber:   'bg-amber-50 text-amber-400 border-amber-200/40',
+  // 深森林 — 状态/类型标签
+  forest:  'bg-forest-100 text-forest-600 border-forest-300/40',
+  // 中性灰 — 弱化标签
+  rock:    'bg-rock-50 text-rock-400 border-rock-200/50',
 }
 
 interface BadgeProps {
@@ -15,9 +19,9 @@ interface BadgeProps {
   className?: string
 }
 
-export default function Badge({ children, tone = 'forest', className = '' }: BadgeProps) {
+export default function Badge({ children, tone = 'apple', className = '' }: BadgeProps) {
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-medium border ${tones[tone]} ${className}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-overline border ${tones[tone]} ${className}`}>
       {children}
     </span>
   )

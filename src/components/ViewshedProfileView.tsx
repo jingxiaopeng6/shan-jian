@@ -60,7 +60,7 @@ export default function ViewshedProfileView({ samples, obstructionDistance }: Pr
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" data-testid="viewshed-profile-svg">
-      {/* 网格 */}
+      {/* 网格 —— 浅色青苹果调 */}
       {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
         <line
           key={i}
@@ -68,60 +68,60 @@ export default function ViewshedProfileView({ samples, obstructionDistance }: Pr
           y1={PAD.t + plotH * (1 - t)}
           x2={PAD.l + plotW}
           y2={PAD.t + plotH * (1 - t)}
-          stroke="rgba(255,255,255,0.06)"
+          stroke="rgba(141,184,56,0.12)"
           strokeWidth={1}
         />
       ))}
-      {/* 坐标轴 */}
-      <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + plotH} stroke="rgba(169,173,165,0.3)" />
-      <line x1={PAD.l} y1={PAD.t + plotH} x2={PAD.l + plotW} y2={PAD.t + plotH} stroke="rgba(169,173,165,0.3)" />
-      {/* 轴标签 */}
-      <text x={PAD.l - 4} y={PAD.t + 4} textAnchor="end" fontSize="9" fill="#A9ADA5">{Math.round(maxE)}m</text>
-      <text x={PAD.l - 4} y={PAD.t + plotH + 3} textAnchor="end" fontSize="9" fill="#A9ADA5">{Math.round(minE)}m</text>
-      <text x={PAD.l} y={H - 6} textAnchor="start" fontSize="9" fill="#A9ADA5">0 m</text>
-      <text x={PAD.l + plotW} y={H - 6} textAnchor="end" fontSize="9" fill="#A9ADA5">{maxD > 1000 ? `${(maxD / 1000).toFixed(1)} km` : `${Math.round(maxD)} m`}</text>
+      {/* 坐标轴 —— 青苹果色 */}
+      <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + plotH} stroke="rgba(141,184,56,0.35)" />
+      <line x1={PAD.l} y1={PAD.t + plotH} x2={PAD.l + plotW} y2={PAD.t + plotH} stroke="rgba(141,184,56,0.35)" />
+      {/* 轴标签 —— 深色文字 */}
+      <text x={PAD.l - 4} y={PAD.t + 4} textAnchor="end" fontSize="9" fill="#6F726C">{Math.round(maxE)}m</text>
+      <text x={PAD.l - 4} y={PAD.t + plotH + 3} textAnchor="end" fontSize="9" fill="#6F726C">{Math.round(minE)}m</text>
+      <text x={PAD.l} y={H - 6} textAnchor="start" fontSize="9" fill="#6F726C">0 m</text>
+      <text x={PAD.l + plotW} y={H - 6} textAnchor="end" fontSize="9" fill="#6F726C">{maxD > 1000 ? `${(maxD / 1000).toFixed(1)} km` : `${Math.round(maxD)} m`}</text>
 
-      {/* 遮挡点垂直辅助线 */}
+      {/* 遮挡点垂直辅助线 —— 暮色橙 */}
       {obstructionX != null && (
         <line
           x1={obstructionX}
           y1={PAD.t}
           x2={obstructionX}
           y2={PAD.t + plotH}
-          stroke="#ef4444"
+          stroke="#D97B3D"
           strokeWidth={1}
           strokeDasharray="2 3"
           opacity={0.5}
         />
       )}
 
-      {/* 地形填充 */}
-      <path d={terrainFill} fill="#D7A85C" opacity={0.25} />
-      <path d={terrainPath} fill="none" stroke="#D7A85C" strokeWidth={1.5} opacity={0.8} />
+      {/* 地形填充 —— 青苹果色 */}
+      <path d={terrainFill} fill="#8DB838" opacity={0.18} />
+      <path d={terrainPath} fill="none" stroke="#6F9A24" strokeWidth={1.5} opacity={0.85} />
 
-      {/* 视线 */}
-      <path d={losPath} fill="none" stroke="#8DAA91" strokeWidth={1.8} strokeDasharray="4 2" />
+      {/* 视线 —— 青苹果深虚线 */}
+      <path d={losPath} fill="none" stroke="#577A18" strokeWidth={1.8} strokeDasharray="4 2" />
 
-      {/* 遮挡点 */}
+      {/* 遮挡点 —— 暮色橙 */}
       {blockedSamples.map((s, i) => (
         <circle
           key={i}
           cx={xAt(s.distance)}
           cy={yAt(s.terrainElevation)}
           r={3.5}
-          fill="#ef4444"
+          fill="#D97B3D"
           stroke="#F4F1E8"
           strokeWidth={1}
         />
       ))}
 
-      {/* 观察者标记 */}
-      <circle cx={xAt(0)} cy={yAt(samples[0].terrainElevation)} r={4} fill="#8DAA91" stroke="#F4F1E8" strokeWidth={1.5} />
-      <text x={xAt(0) + 8} y={yAt(samples[0].terrainElevation) - 6} fontSize="9" fill="#8DAA91" fontWeight="600">游客</text>
+      {/* 观察者标记 —— 青苹果深 */}
+      <circle cx={xAt(0)} cy={yAt(samples[0].terrainElevation)} r={4} fill="#577A18" stroke="#F4F1E8" strokeWidth={1.5} />
+      <text x={xAt(0) + 8} y={yAt(samples[0].terrainElevation) - 6} fontSize="9" fill="#577A18" fontWeight="600">游客</text>
 
-      {/* 目标标记 */}
-      <circle cx={xAt(maxD)} cy={yAt(samples[samples.length - 1].terrainElevation)} r={4} fill="#D7A85C" stroke="#F4F1E8" strokeWidth={1.5} />
-      <text x={xAt(maxD) - 8} y={yAt(samples[samples.length - 1].terrainElevation) - 6} textAnchor="end" fontSize="9" fill="#D7A85C" fontWeight="600">山峰</text>
+      {/* 目标标记 —— 青苹果强调 */}
+      <circle cx={xAt(maxD)} cy={yAt(samples[samples.length - 1].terrainElevation)} r={4} fill="#8DB838" stroke="#F4F1E8" strokeWidth={1.5} />
+      <text x={xAt(maxD) - 8} y={yAt(samples[samples.length - 1].terrainElevation) - 6} textAnchor="end" fontSize="9" fill="#3D5A1F" fontWeight="700">山峰</text>
     </svg>
   )
 }
