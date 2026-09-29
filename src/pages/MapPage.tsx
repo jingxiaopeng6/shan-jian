@@ -180,7 +180,7 @@ export default function MapPage() {
 
             {/* 距离 */}
             {userPosition && (() => {
-              const dist = calculateDistanceKm(userPosition, { lat: selectedPeak.latitude, lng: selectedPeak.longitude })
+              const dist = calculateDistanceKm(userPosition, { lat: selectedPeak.lat, lng: selectedPeak.lng })
               return (
                 <div className="flex items-center gap-3 text-xs text-rock-300">
                   <span className="inline-flex items-center gap-1">
