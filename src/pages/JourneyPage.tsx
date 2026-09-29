@@ -2,21 +2,38 @@
  * JourneyPage — 山见档案（个人旅行记录）
  *
  * 复用 travelLog + trackLog + attractions/nfcPoints 数据源
- * 展示：总览统计 / 已探索列表 / 未探索列表 / 旅行卡
+ * 展示：成就等级 + 徽章墙 / 总览统计 / 已探索列表 / 未探索列表 / 明信片生成
  */
 
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Map, Footprints, Award, Route, Download, ChevronRight, Lock, Trash2, Check } from 'lucide-react'
+import { Map, Footprints, Award, Route, ChevronRight, Lock, Trash2, Check, Camera } from 'lucide-react'
 import { attractions } from '../data/attractions'
 import { nfcPoints } from '../data/nfcPoints'
-import { getVisits, getVisit, type VisitRecord } from '../services/travelLog'
+import { getVisits, getVisit } from '../services/travelLog'
 import { getTrackStats, clearTrack } from '../services/trackLog'
+import { getMilestones } from '../services/achievementService'
+import AchievementPanel from '../components/AchievementPanel'
+import PhotoUpload from '../components/PhotoUpload'
+import TravelPoster from '../components/TravelPoster'
+import BottomSheet from '../components/ui/BottomSheet'
+
+/** sessionStorage 标志位：用户是否已生成过明信片海报 */
+const POSTER_FLAG_KEY = 'has-generated-poster'
 
 export default function JourneyPage() {
   const navigate = useNavigate()
   const [, forceUpdate] = useState(0)
-  const [showCard, setShowCard] = useState(false)
+  const [showPoster, setShowPoster] = useState(false)
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null)
+  // 已生成海报标志（解锁「旅行印记」徽章）
+  const [hasGeneratedPoster, setHasGeneratedPoster] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(POSTER_FLAG_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
 
   const stats = useMemo(() => {
     const visits = getVisits()
@@ -44,6 +61,39 @@ export default function JourneyPage() {
 
   const refresh = () => forceUpdate((n) => n + 1)
 
+  // 处理首次生成海报：解锁徽章 + 持久标志
+  const handleFirstPoster = () => {
+    setHasGeneratedPoster(true)
+    try {
+      sessionStorage.setItem(POSTER_FLAG_KEY, '1')
+    } catch {
+      // sessionStorage 不可用时静默降级
+    }
+  }
+
+  // BottomSheet 关闭时同步清空照片，下次打开重新上传
+  const closePoster = () => {
+    setShowPoster(false)
+    setPhotoDataUrl(null)
+  }
+
+  // 海报所需的徽章列表（已解锁在前，最多 5 枚）
+  const milestones = useMemo(
+    () => getMilestones(
+      { exploredCount: stats.exploredCount, totalDistanceKm: stats.track.totalDistanceKm, totalAttractions: stats.totalAttractions },
+      hasGeneratedPoster
+    ),
+    [stats.exploredCount, stats.track.totalDistanceKm, stats.totalAttractions, hasGeneratedPoster]
+  )
+
+  // 已探索景点名列表（用于海报展示路线）
+  const exploredNames = useMemo(
+    () => nfcPoints
+      .filter((p) => stats.visits.some((v) => v.attractionId === p.attractionId))
+      .map((p) => p.name),
+    [stats.visits]
+  )
+
   return (
     <div className="min-h-screen bg-cheese text-ink">
       <div className="max-w-lg mx-auto px-4 py-5 space-y-5 safe-top pb-20">
@@ -56,6 +106,16 @@ export default function JourneyPage() {
           </div>
           <p className="mt-3 font-serif text-2xl text-forest-700 font-bold">你的武功山探索记录</p>
         </div>
+
+        {/* 成就面板：等级卡 + 徽章墙 */}
+        <AchievementPanel
+          stats={{
+            exploredCount: stats.exploredCount,
+            totalDistanceKm: stats.track.totalDistanceKm,
+            totalAttractions: stats.totalAttractions,
+          }}
+          hasGeneratedPoster={hasGeneratedPoster}
+        />
 
         {/* 探索进度总览 —— 主卡 */}
         <div className="glass-light rounded-3xl p-5 shadow-glass">
@@ -93,17 +153,49 @@ export default function JourneyPage() {
           )}
         </div>
 
-        {/* 生成旅行卡按钮 —— Primary 青苹果 */}
+        {/* 制作明信片按钮 —— 打开 BottomSheet */}
         <button
-          onClick={() => setShowCard(!showCard)}
+          onClick={() => setShowPoster(true)}
           className="w-full h-12 rounded-full bg-apple-400 text-cheese-50 text-sm font-semibold hover:bg-apple-300 transition active:scale-95 inline-flex items-center justify-center gap-2 shadow-apple"
+          data-testid="open-poster-btn"
         >
-          <Download size={15} />
-          {showCard ? '收起旅行卡' : '生成旅行海报'}
+          <Camera size={15} />
+          制作明信片
         </button>
 
-        {/* 旅行纪念卡 */}
-        {showCard && <TravelCard stats={stats} firstVisit={stats.firstVisit} />}
+        {/* 明信片 BottomSheet —— 上传照片 + 生成海报 */}
+        <BottomSheet open={showPoster} onClose={closePoster}>
+          <div className="pt-2 pb-4 space-y-4">
+            <div className="text-center">
+              <div className="text-sm font-semibold text-forest-700 inline-flex items-center gap-1.5">
+                <Camera size={14} className="text-apple-500" />
+                制作旅行明信片
+              </div>
+              <p className="text-caption text-rock-400 mt-1">上传一张你最满意的旅行照片，生成专属明信片</p>
+            </div>
+
+            <PhotoUpload
+              onPhotoLoaded={setPhotoDataUrl}
+              photoDataUrl={photoDataUrl}
+              onClear={() => setPhotoDataUrl(null)}
+            />
+
+            {photoDataUrl && (
+              <TravelPoster
+                photoDataUrl={photoDataUrl}
+                stats={{
+                  totalDistanceKm: stats.track.totalDistanceKm,
+                  exploredCount: stats.exploredCount,
+                  badgeCount: stats.badgeCount,
+                }}
+                exploredNames={exploredNames}
+                milestones={milestones}
+                date={new Date()}
+                onFirstPoster={handleFirstPoster}
+              />
+            )}
+          </div>
+        </BottomSheet>
 
         {/* 已探索景点 */}
         <div className="glass-light rounded-2xl p-4 shadow-card">
@@ -214,96 +306,6 @@ function StatCard({ icon, label, value, unit }: { icon: React.ReactNode; label: 
       <div className="flex items-center justify-center text-apple-600 mb-1">{icon}</div>
       <div className="text-ink font-bold text-sm tabular-nums">{value}</div>
       <div className="text-[9px] text-rock-400">{unit}</div>
-    </div>
-  )
-}
-
-/** 旅行纪念卡组件 */
-function TravelCard({ stats, firstVisit }: { stats: any; firstVisit: VisitRecord | null }) {
-  const dateStr = firstVisit
-    ? new Date(firstVisit.timestamp).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, ' · ')
-    : new Date().toLocaleDateString('zh-CN').replace(/\//g, ' · ')
-
-  const exploredNames = nfcPoints
-    .filter((p) => stats.visits.some((v: VisitRecord) => v.attractionId === p.attractionId))
-    .map((p) => p.name)
-
-  return (
-    <div className="rounded-3xl overflow-hidden glass-light shadow-glass border border-apple-400/20" data-testid="travel-card">
-      {/* 卡片背景 —— 奶酪渐变 */}
-      <div className="relative p-6 overflow-hidden bg-cheese-gradient">
-        {/* 装饰山脉 */}
-        <div className="absolute bottom-0 left-0 right-0 opacity-25 pointer-events-none">
-          <svg viewBox="0 0 400 100" className="w-full h-20">
-            <path d="M0 100 L50 40 L90 70 L130 20 L170 60 L210 30 L250 70 L290 25 L330 55 L400 35 L400 100 Z" fill="#8DB838" />
-          </svg>
-        </div>
-
-        <div className="relative z-10">
-          {/* 品牌 */}
-          <div className="text-center mb-5">
-            <div className="font-serif text-3xl font-bold text-forest-700 tracking-wider">山见</div>
-            <div className="text-overline text-rock-400 mt-1">看见风景，也看懂风景</div>
-          </div>
-
-          {/* 标题 */}
-          <div className="text-center mb-5">
-            <div className="text-sm text-apple-600 font-semibold">我的武功山</div>
-            <div className="text-overline text-rock-400 mt-0.5 tabular-nums">{dateStr}</div>
-          </div>
-
-          {/* 统计 */}
-          <div className="grid grid-cols-3 gap-2 mb-5">
-            <div className="text-center rounded-xl bg-cheese-50 py-3 border border-apple-400/15">
-              <div className="text-2xl font-bold text-ink tabular-nums">{stats.track.totalDistanceKm.toFixed(1)}</div>
-              <div className="text-[9px] text-rock-400 mt-0.5">km 距离</div>
-            </div>
-            <div className="text-center rounded-xl bg-cheese-50 py-3 border border-apple-400/15">
-              <div className="text-2xl font-bold text-ink tabular-nums">{stats.exploredCount}</div>
-              <div className="text-[9px] text-rock-400 mt-0.5">山峰</div>
-            </div>
-            <div className="text-center rounded-xl bg-apple-100 py-3 border border-apple-400/30">
-              <div className="text-2xl font-bold text-apple-700 tabular-nums">{stats.badgeCount}</div>
-              <div className="text-[9px] text-apple-600 mt-0.5">印记</div>
-            </div>
-          </div>
-
-          {/* 探索地点 */}
-          {exploredNames.length > 0 && (
-            <div className="mb-4">
-              <div className="text-overline text-rock-400 mb-1.5 tracking-wider font-semibold">探索路线</div>
-              <div className="text-caption text-ink leading-relaxed">
-                {exploredNames.map((name, i) => (
-                  <span key={i}>
-                    {i > 0 && <span className="text-apple-500 mx-1">→</span>}
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 徽章 */}
-          {stats.visits.length > 0 && (
-            <div className="flex justify-center gap-3 mb-4">
-              {stats.visits.filter((v: VisitRecord) => v.badgeIcon).map((v: VisitRecord) => (
-                <div key={v.visitId} className="flex flex-col items-center">
-                  <span className="text-xl">{v.badgeIcon}</span>
-                  <span className="text-[8px] text-rock-400 mt-0.5">{v.badge}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 进度条 —— 青苹果渐变 */}
-          <div className="rounded-full bg-apple-100 h-1.5 overflow-hidden">
-            <div className="h-full bg-apple-gradient rounded-full transition-all duration-500" style={{ width: `${stats.progress}%` }} />
-          </div>
-          <div className="text-center text-overline text-apple-700 mt-1.5 font-semibold">
-            探索进度 {stats.progress}%
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
