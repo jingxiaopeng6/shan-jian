@@ -11,6 +11,13 @@
  * - totalAttractions: NFC 景点总数（来自 nfcPoints）
  */
 
+/** 景点 ID 常量（与 nfcPoints 中的 attractionId 保持一致） */
+export const ATTRACTION_IDS = {
+  JINDING: 'jinding',
+  FAYUNJIE: 'fayunjie',
+  YANGSHIMU: 'yangshimu',
+} as const
+
 /** 成就统计输入 */
 export interface AchievementStats {
   /** 已打卡 NFC 景点数 */
@@ -19,6 +26,8 @@ export interface AchievementStats {
   totalDistanceKm: number
   /** NFC 景点总数（大满贯判定） */
   totalAttractions: number
+  /** 已打卡景点 ID 列表（用于精确判定景点类徽章） */
+  visitedAttractionIds: string[]
 }
 
 /** 等级头衔 */
@@ -148,7 +157,8 @@ export function getMilestones(
   stats: AchievementStats,
   hasGeneratedPoster: boolean
 ): Milestone[] {
-  const { exploredCount, totalDistanceKm, totalAttractions } = stats
+  const { exploredCount, totalDistanceKm, totalAttractions, visitedAttractionIds } = stats
+  const visited = new Set(visitedAttractionIds)
 
   return [
     {
@@ -163,23 +173,21 @@ export function getMilestones(
       name: '金顶征服者',
       icon: '🏔️',
       description: '打卡金顶',
-      // 由于 stats 中没有按景点细分，按 exploredCount >= 1 近似
-      // 真实判定在 JourneyPage 通过 visits 直接传入更精确，此处保留通用版本
-      unlocked: exploredCount >= 1,
+      unlocked: visited.has(ATTRACTION_IDS.JINDING),
     },
     {
       id: 'cloud-walk',
       name: '云端漫步',
       icon: '☁️',
       description: '打卡发云界',
-      unlocked: exploredCount >= 2,
+      unlocked: visited.has(ATTRACTION_IDS.FAYUNJIE),
     },
     {
       id: 'wild-explorer',
       name: '山野探险家',
       icon: '🦁',
       description: '打卡羊狮幕',
-      unlocked: exploredCount >= 3,
+      unlocked: visited.has(ATTRACTION_IDS.YANGSHIMU),
     },
     {
       id: 'long-trek',

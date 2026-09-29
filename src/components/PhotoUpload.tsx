@@ -44,9 +44,9 @@ export default function PhotoUpload({ onPhotoLoaded, photoDataUrl, onClear }: Pr
         return
       }
 
-      // 读取 + 压缩
+      // 读取 + 压缩（保留原格式，避免 PNG 透明背景被压成黑色）
       const raw = await readAsDataURL(file)
-      const compressed = await compressImage(raw, COMPRESS_WIDTH)
+      const compressed = await compressImage(raw, COMPRESS_WIDTH, file.type)
       onPhotoLoaded(compressed)
     } catch (e) {
       console.error('photo process error', e)
@@ -153,12 +153,12 @@ function readAsDataURL(file: File): Promise<string> {
   })
 }
 
-/** 压缩图片到指定宽度，保持比例 */
-function compressImage(dataUrl: string, targetWidth: number): Promise<string> {
+/** 压缩图片到指定宽度，保持比例与原格式 */
+function compressImage(dataUrl: string, targetWidth: number, mimeType: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
-      // 已经够小，直接返回
+      // 已经够小，直接返回原图
       if (img.width <= targetWidth) {
         resolve(dataUrl)
         return
@@ -174,8 +174,10 @@ function compressImage(dataUrl: string, targetWidth: number): Promise<string> {
         return
       }
       ctx.drawImage(img, 0, 0, targetWidth, targetHeight)
-      // 0.85 质量，肉眼几乎无差，文件大幅缩小
-      resolve(canvas.toDataURL('image/jpeg', 0.85))
+      // PNG 保留透明通道；其他格式用 JPEG 0.85 压缩
+      const outType = mimeType === 'image/png' ? 'image/png' : 'image/jpeg'
+      const quality = outType === 'image/jpeg' ? 0.85 : undefined
+      resolve(canvas.toDataURL(outType, quality))
     }
     img.onerror = reject
     img.src = dataUrl

@@ -7,7 +7,7 @@ describe('AchievementPanel 组件', () => {
   it('零探索状态下渲染等级 1 头衔', () => {
     const { container } = render(
       <AchievementPanel
-        stats={{ exploredCount: 0, totalDistanceKm: 0, totalAttractions: 3 }}
+        stats={{ exploredCount: 0, totalDistanceKm: 0, totalAttractions: 3, visitedAttractionIds: [] }}
         hasGeneratedPoster={false}
       />
     )
@@ -19,7 +19,7 @@ describe('AchievementPanel 组件', () => {
   it('等级卡显示进度条', () => {
     const { container } = render(
       <AchievementPanel
-        stats={{ exploredCount: 1, totalDistanceKm: 0, totalAttractions: 3 }}
+        stats={{ exploredCount: 1, totalDistanceKm: 0, totalAttractions: 3, visitedAttractionIds: [] }}
         hasGeneratedPoster={false}
       />
     )
@@ -30,7 +30,7 @@ describe('AchievementPanel 组件', () => {
   it('徽章墙渲染 8 枚徽章', () => {
     const { container } = render(
       <AchievementPanel
-        stats={{ exploredCount: 0, totalDistanceKm: 0, totalAttractions: 3 }}
+        stats={{ exploredCount: 0, totalDistanceKm: 0, totalAttractions: 3, visitedAttractionIds: [] }}
         hasGeneratedPoster={false}
       />
     )
@@ -42,7 +42,7 @@ describe('AchievementPanel 组件', () => {
   it('已生成海报 → 旅行印记徽章已解锁', () => {
     const { container } = render(
       <AchievementPanel
-        stats={{ exploredCount: 0, totalDistanceKm: 0, totalAttractions: 3 }}
+        stats={{ exploredCount: 0, totalDistanceKm: 0, totalAttractions: 3, visitedAttractionIds: [] }}
         hasGeneratedPoster={true}
       />
     )
@@ -53,7 +53,7 @@ describe('AchievementPanel 组件', () => {
   it('打卡 3 个全部 → 钻石登山者 + 钻石无下级提示', () => {
     render(
       <AchievementPanel
-        stats={{ exploredCount: 3, totalDistanceKm: 0, totalAttractions: 3 }}
+        stats={{ exploredCount: 3, totalDistanceKm: 0, totalAttractions: 3, visitedAttractionIds: ['jinding', 'fayunjie', 'yangshimu'] }}
         hasGeneratedPoster={false}
       />
     )
@@ -64,11 +64,11 @@ describe('AchievementPanel 组件', () => {
   it('显示已解锁徽章数 / 总数', () => {
     const { container } = render(
       <AchievementPanel
-        stats={{ exploredCount: 1, totalDistanceKm: 0, totalAttractions: 3 }}
+        stats={{ exploredCount: 1, totalDistanceKm: 0, totalAttractions: 3, visitedAttractionIds: ['jinding'] }}
         hasGeneratedPoster={false}
       />
     )
-    // 1 个景点 → first-visit + conquer-jinding = 2 枚
+    // 打卡金顶 → first-visit + conquer-jinding = 2 枚
     // 数值与总数被分隔为多个文本节点，用 textContent 检查
     expect(container.textContent).toMatch(/2\s*\/\s*8/)
   })

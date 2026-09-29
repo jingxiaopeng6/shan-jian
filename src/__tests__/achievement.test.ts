@@ -3,6 +3,7 @@ import {
   getAchievementLevel,
   getMilestones,
   countUnlockedMilestones,
+  ATTRACTION_IDS,
   type AchievementStats,
 } from '../services/achievementService'
 
@@ -13,6 +14,7 @@ function makeStats(over: Partial<AchievementStats>): AchievementStats {
     exploredCount: 0,
     totalDistanceKm: 0,
     totalAttractions: TOTAL,
+    visitedAttractionIds: [],
     ...over,
   }
 }
@@ -85,22 +87,45 @@ describe('getMilestones', () => {
     expect(ms.every((m) => !m.unlocked)).toBe(true)
   })
 
-  it('首次打卡 → 解锁初访 + 金顶征服者', () => {
-    const ms = getMilestones(makeStats({ exploredCount: 1 }), false)
+  it('首次打卡金顶 → 解锁初访 + 金顶征服者', () => {
+    const ms = getMilestones(
+      makeStats({ exploredCount: 1, visitedAttractionIds: [ATTRACTION_IDS.JINDING] }),
+      false
+    )
     const unlocked = ms.filter((m) => m.unlocked).map((m) => m.id)
     expect(unlocked).toContain('first-visit')
     expect(unlocked).toContain('conquer-jinding')
   })
 
-  it('2 个景点 → 解锁云端漫步', () => {
-    const ms = getMilestones(makeStats({ exploredCount: 2 }), false)
+  it('打卡发云界 → 解锁云端漫步（不解锁金顶征服者）', () => {
+    const ms = getMilestones(
+      makeStats({ exploredCount: 1, visitedAttractionIds: [ATTRACTION_IDS.FAYUNJIE] }),
+      false
+    )
     expect(ms.find((m) => m.id === 'cloud-walk')?.unlocked).toBe(true)
+    expect(ms.find((m) => m.id === 'conquer-jinding')?.unlocked).toBe(false)
   })
 
-  it('3 个景点 → 解锁山野探险家 + 三绝集齐', () => {
-    const ms = getMilestones(makeStats({ exploredCount: TOTAL }), false)
+  it('打卡羊狮幕 → 解锁山野探险家', () => {
+    const ms = getMilestones(
+      makeStats({ exploredCount: 1, visitedAttractionIds: [ATTRACTION_IDS.YANGSHIMU] }),
+      false
+    )
+    expect(ms.find((m) => m.id === 'wild-explorer')?.unlocked).toBe(true)
+  })
+
+  it('3 个景点全部打卡 → 解锁山野探险家 + 三绝集齐', () => {
+    const ms = getMilestones(
+      makeStats({
+        exploredCount: TOTAL,
+        visitedAttractionIds: [ATTRACTION_IDS.JINDING, ATTRACTION_IDS.FAYUNJIE, ATTRACTION_IDS.YANGSHIMU],
+      }),
+      false
+    )
     expect(ms.find((m) => m.id === 'wild-explorer')?.unlocked).toBe(true)
     expect(ms.find((m) => m.id === 'three-wonders')?.unlocked).toBe(true)
+    expect(ms.find((m) => m.id === 'conquer-jinding')?.unlocked).toBe(true)
+    expect(ms.find((m) => m.id === 'cloud-walk')?.unlocked).toBe(true)
   })
 
   it('距离 ≥ 10km → 解锁长途跋涉', () => {
@@ -142,14 +167,22 @@ describe('countUnlockedMilestones', () => {
   it('全成就解锁 → 8', () => {
     expect(
       countUnlockedMilestones(
-        makeStats({ exploredCount: TOTAL, totalDistanceKm: 120 }),
+        makeStats({
+          exploredCount: TOTAL,
+          totalDistanceKm: 120,
+          visitedAttractionIds: [ATTRACTION_IDS.JINDING, ATTRACTION_IDS.FAYUNJIE, ATTRACTION_IDS.YANGSHIMU],
+        }),
         true
       )
     ).toBe(8)
   })
 
-  it('部分解锁数量正确', () => {
-    // exploredCount=1, no poster → 2 个（first-visit + conquer-jinding）
-    expect(countUnlockedMilestones(makeStats({ exploredCount: 1 }), false)).toBe(2)
+  it('只打卡金顶 → 2 个（first-visit + conquer-jinding）', () => {
+    expect(
+      countUnlockedMilestones(
+        makeStats({ exploredCount: 1, visitedAttractionIds: [ATTRACTION_IDS.JINDING] }),
+        false
+      )
+    ).toBe(2)
   })
 })

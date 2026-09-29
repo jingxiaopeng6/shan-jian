@@ -23,7 +23,7 @@ const POSTER_FLAG_KEY = 'has-generated-poster'
 
 export default function JourneyPage() {
   const navigate = useNavigate()
-  const [, forceUpdate] = useState(0)
+  const [tick, forceUpdate] = useState(0)
   const [showPoster, setShowPoster] = useState(false)
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null)
   // 已生成海报标志（解锁「旅行印记」徽章）
@@ -40,6 +40,7 @@ export default function JourneyPage() {
     const track = getTrackStats()
     const totalAttractions = nfcPoints.length // 有 NFC 的景点总数
     const exploredCount = nfcPoints.filter((p) => visits.some((v) => v.attractionId === p.attractionId)).length
+    const visitedAttractionIds = visits.map((v) => v.attractionId)
     const badgeCount = visits.filter((v) => v.badge).length
     const lastVisit = visits.length > 0
       ? visits.reduce((a, b) => (a.timestamp > b.timestamp ? a : b))
@@ -52,12 +53,13 @@ export default function JourneyPage() {
       track,
       totalAttractions,
       exploredCount,
+      visitedAttractionIds,
       progress: totalAttractions > 0 ? Math.round((exploredCount / totalAttractions) * 100) : 0,
       badgeCount,
       lastVisit,
       firstVisit,
     }
-  }, [])
+  }, [tick])
 
   const refresh = () => forceUpdate((n) => n + 1)
 
@@ -80,10 +82,15 @@ export default function JourneyPage() {
   // 海报所需的徽章列表（已解锁在前，最多 5 枚）
   const milestones = useMemo(
     () => getMilestones(
-      { exploredCount: stats.exploredCount, totalDistanceKm: stats.track.totalDistanceKm, totalAttractions: stats.totalAttractions },
+      {
+        exploredCount: stats.exploredCount,
+        totalDistanceKm: stats.track.totalDistanceKm,
+        totalAttractions: stats.totalAttractions,
+        visitedAttractionIds: stats.visitedAttractionIds,
+      },
       hasGeneratedPoster
     ),
-    [stats.exploredCount, stats.track.totalDistanceKm, stats.totalAttractions, hasGeneratedPoster]
+    [stats.exploredCount, stats.track.totalDistanceKm, stats.totalAttractions, stats.visitedAttractionIds, hasGeneratedPoster]
   )
 
   // 已探索景点名列表（用于海报展示路线）
@@ -113,6 +120,7 @@ export default function JourneyPage() {
             exploredCount: stats.exploredCount,
             totalDistanceKm: stats.track.totalDistanceKm,
             totalAttractions: stats.totalAttractions,
+            visitedAttractionIds: stats.visitedAttractionIds,
           }}
           hasGeneratedPoster={hasGeneratedPoster}
         />

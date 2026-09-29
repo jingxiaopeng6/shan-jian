@@ -165,9 +165,11 @@ export default function TravelPoster({
         ctx.fillText(routeStr.length > 22 ? routeStr.slice(0, 20) + '…' : routeStr, CANVAS_W / 2, routeY + 32)
       }
 
-      // 7. 徽章一行（最多 5 枚）
+      // 7. 徽章一行（最多 5 枚，已解锁优先展示）
       const badgeY = cardY + cardH + 130
-      const badgeRow = milestones.slice(0, 5)
+      const unlockedBadges = milestones.filter((m) => m.unlocked)
+      const lockedBadges = milestones.filter((m) => !m.unlocked)
+      const badgeRow = [...unlockedBadges, ...lockedBadges].slice(0, 5)
       const badgeSize = 64
       const badgeGap = 28
       const totalBadgeW = badgeRow.length * badgeSize + (badgeRow.length - 1) * badgeGap
@@ -177,10 +179,9 @@ export default function TravelPoster({
         const cx = badgeStartX + i * (badgeSize + badgeGap)
         ctx.textAlign = 'center'
         ctx.font = '48px serif'
+        // 未解锁徽章降透明度后再绘制
+        ctx.globalAlpha = m.unlocked ? 1 : 0.4
         ctx.fillText(m.unlocked ? m.icon : '🔒', cx, badgeY + badgeSize / 2 + 16)
-        if (!m.unlocked) {
-          ctx.globalAlpha = 0.4
-        }
       })
       ctx.globalAlpha = 1
 
