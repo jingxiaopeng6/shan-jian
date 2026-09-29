@@ -59,7 +59,7 @@ export default function JourneyPage() {
         <div className="rounded-2xl bg-gradient-to-br from-forest-800 to-forest-900 text-white p-5 shadow-soft">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-xs text-sand-300">这是你的山见旅程</div>
+              <div className="text-xs text-sand-300">武功山探索度</div>
               <div className="text-2xl font-bold mt-1">{stats.exploredCount} / {stats.totalAttractions}</div>
               <div className="text-xs text-sand-300 mt-0.5">{stats.progress}% · 每一次抵达，都成为你的旅行记录</div>
             </div>
@@ -93,6 +93,13 @@ export default function JourneyPage() {
           )}
         </div>
 
+        {/* 商业价值说明 */}
+        <div className="rounded-xl bg-sand-50 border border-sand-200 p-3">
+          <p className="text-[11px] text-stone2-500 leading-relaxed text-center">
+            游客行为通过空间化记录沉淀为个人旅行资产
+          </p>
+        </div>
+
         {/* 生成旅行卡按钮 */}
         <button
           onClick={() => setShowCard(!showCard)}
@@ -105,7 +112,7 @@ export default function JourneyPage() {
         {/* 旅行纪念卡 */}
         {showCard && <TravelCard stats={stats} firstVisit={stats.firstVisit} />}
 
-        {/* 已探索景点 */}
+        {/* 已探索景点 + 徽章体系 */}
         <div className="rounded-2xl bg-white border border-forest-100 shadow-soft p-4">
           <h2 className="text-sm font-medium text-forest-800 mb-3 flex items-center gap-1.5">
             <span>✓</span> 已探索景点 ({stats.exploredCount})
@@ -131,8 +138,9 @@ export default function JourneyPage() {
                         <div className="text-[10px] text-stone2-500">
                           {attraction?.elevation ?? '-'} m · {new Date(visit.timestamp).toLocaleDateString('zh-CN')}
                         </div>
+                        <div className="text-[9px] text-stone2-400 mt-0.5">{p.badgeDescription}</div>
                       </div>
-                      <span className="text-[10px] text-forest-600 bg-forest-100 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] text-forest-600 bg-forest-100 px-2 py-0.5 rounded-full whitespace-nowrap">
                         {p.badge}
                       </span>
                     </button>
@@ -209,6 +217,10 @@ function TravelCard({ stats, firstVisit }: { stats: any; firstVisit: VisitRecord
     ? new Date(firstVisit.timestamp).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
     : new Date().toLocaleDateString('zh-CN')
 
+  const exploredNames = nfcPoints
+    .filter((p) => stats.visits.some((v: VisitRecord) => v.attractionId === p.attractionId))
+    .map((p) => p.name)
+
   return (
     <div className="rounded-2xl overflow-hidden shadow-soft border border-forest-200" data-testid="travel-card">
       {/* 卡片背景 */}
@@ -249,6 +261,20 @@ function TravelCard({ stats, firstVisit }: { stats: any; firstVisit: VisitRecord
             </div>
           </div>
 
+          {/* 探索地点 */}
+          {exploredNames.length > 0 && (
+            <div className="mb-3">
+              <div className="text-[9px] text-sand-400 mb-1">探索地点</div>
+              <div className="flex flex-wrap gap-1">
+                {exploredNames.map((name, i) => (
+                  <span key={i} className="text-[10px] text-sand-200 bg-white/10 rounded-full px-2 py-0.5">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 徽章 */}
           {stats.visits.length > 0 && (
             <div className="flex justify-center gap-2 mb-3">
@@ -258,6 +284,16 @@ function TravelCard({ stats, firstVisit }: { stats: any; firstVisit: VisitRecord
                   <span className="text-[8px] text-sand-300 mt-0.5">{v.badge}</span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* 路线 */}
+          {exploredNames.length > 0 && (
+            <div className="mb-3 text-center">
+              <div className="text-[9px] text-sand-400 mb-1">探索路线</div>
+              <div className="text-[10px] text-sand-200">
+                {exploredNames.join(' → ')}
+              </div>
             </div>
           )}
 

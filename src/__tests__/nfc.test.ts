@@ -19,6 +19,7 @@ describe('NFC Points data', () => {
       expect(p.badge).toBeTruthy()
       expect(p.unlockedContent).toBeTruthy()
       expect(p.badgeIcon).toBeTruthy()
+      expect(p.badgeDescription).toBeTruthy()
     }
   })
 

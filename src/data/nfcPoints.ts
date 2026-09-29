@@ -22,6 +22,8 @@ export interface NfcPoint {
   badgeIcon: string
   /** 打卡描述 */
   description: string
+  /** 徽章描述说明 */
+  badgeDescription: string
 }
 
 export const nfcPoints: NfcPoint[] = [
@@ -34,6 +36,7 @@ export const nfcPoints: NfcPoint[] = [
     badge: '金顶探索者',
     badgeIcon: '🏔️',
     description: '登顶武功山最高峰',
+    badgeDescription: '完成金顶打卡，征服江西之巅',
   },
   {
     nfcId: 'wugongshan-fayunjie',
@@ -44,6 +47,7 @@ export const nfcPoints: NfcPoint[] = [
     badge: '云端行者',
     badgeIcon: '☁️',
     description: '漫步云端草甸',
+    badgeDescription: '完成发云界探索任务，漫步云端',
   },
   {
     nfcId: 'wugongshan-yangshimu',
@@ -54,6 +58,7 @@ export const nfcPoints: NfcPoint[] = [
     badge: '山野发现者',
     badgeIcon: '🦁',
     description: '探索武功三绝之一',
+    badgeDescription: '完成多个景点探索，发现武功三绝',
   },
 ]
 
