@@ -143,30 +143,30 @@ export default function ViewshedPage() {
         <section className="mb-6">
           <div className="flex items-center gap-2 text-overline text-apple-600 tracking-[0.2em] font-semibold mb-2">
             <Crosshair size={11} />
-            GIS 视域分析
+            山体可见性分析
           </div>
           <h1 className="font-serif text-forest-700 text-2xl font-bold">
             {result.visible ? '可以看到' : '无法看到'}
             <span className="text-apple-600"> {peak.name}</span>
           </h1>
-          <p className="mt-1.5 text-sm text-ink-50">基于 DEM 地形进行视线分析 · LOS (Line of Sight) 算法</p>
+          <p className="mt-1.5 text-sm text-ink-50">基于真实地形数据 · 分析你与山峰之间是否有遮挡</p>
 
           {/* 数据来源标识 */}
           <div className="mt-3">
             {isDemReady ? (
               <span className="inline-flex items-center gap-1.5 text-caption text-apple-700 glass-light rounded-full px-2.5 py-1 border border-apple-400/30 shadow-glass">
                 <span className="w-1.5 h-1.5 rounded-full bg-apple-500 pulse-dot" />
-                基于真实 DEM 分析
+                基于真实地形分析
               </span>
             ) : terrainMode === 'dem' && demStatus === 'loading' ? (
               <span className="inline-flex items-center gap-1.5 text-caption text-apple-600 glass-light rounded-full px-2.5 py-1 border border-apple-400/30 shadow-glass">
                 <span className="w-1.5 h-1.5 rounded-full bg-apple-500 animate-pulse" />
-                DEM 加载中…
+                地形加载中…
               </span>
             ) : terrainMode === 'dem' && demStatus === 'error' ? (
               <span className="inline-flex items-center gap-1.5 text-caption text-amber-400 glass-light rounded-full px-2.5 py-1 border border-amber-400/30 shadow-glass">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                DEM 加载失败：{demError}
+                地形加载失败：{demError}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 text-caption text-rock-400 glass-light rounded-full px-2.5 py-1 border border-rock-200/40 shadow-glass">
@@ -292,7 +292,7 @@ export default function ViewshedPage() {
                     视线方向地形剖面
                   </div>
                   <div className="text-overline text-rock-400 mt-0.5">
-                    横轴：距离 (m) · 纵轴：海拔 (m){isDemReady ? ' · 真实 DEM 采样' : ''}
+                    横轴：距离 (m) · 纵轴：海拔 (m){isDemReady ? ' · 真实地形采样' : ''}
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 text-overline">
@@ -300,7 +300,7 @@ export default function ViewshedPage() {
                     <span className="w-5 h-0.5" style={{ borderTop: '1px dashed #8DB838' }} /> 观察点视线
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-apple-700">
-                    <span className="w-5 h-1 bg-apple-300 rounded-sm" /> DEM 地形
+                    <span className="w-5 h-1 bg-apple-300 rounded-sm" /> 真实地形
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-amber-400">
                     <span className="w-2 h-2 rounded-full bg-amber-400" /> 遮挡点

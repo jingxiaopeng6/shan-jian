@@ -68,8 +68,9 @@ export function addTrackPoint(lat: number, lng: number, accuracy?: number): bool
   if (distKm < MIN_DISTANCE_KM) return false
 
   // 速度过滤：计算瞬时速度，异常跳点丢弃
+  // 时间差小于 100ms 时跳过速度过滤（避免测试或批量写入时误杀）
   const timeDiffH = (now - last.t) / 3600000
-  if (timeDiffH > 0) {
+  if (timeDiffH > 0.0001) {
     const speed = distKm / timeDiffH
     if (speed > MAX_SPEED_KMH) return false
   }

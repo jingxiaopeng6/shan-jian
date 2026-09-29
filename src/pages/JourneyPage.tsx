@@ -81,9 +81,9 @@ export default function JourneyPage() {
           {/* 统计网格 */}
           <div className="grid grid-cols-4 gap-2 text-center">
             <StatCard icon={<Route size={13} />} label="探索距离" value={`${stats.track.totalDistanceKm.toFixed(1)}`} unit="km" />
-            <StatCard icon={<Map size={13} />} label="探索山峰" value={`${stats.exploredCount}`} unit="座" />
+            <StatCard icon={<Map size={13} />} label="已访景点" value={`${stats.exploredCount}`} unit="处" />
             <StatCard icon={<Award size={13} />} label="探索印记" value={`${stats.badgeCount}`} unit="枚" />
-            <StatCard icon={<Footprints size={13} />} label="GPS 轨迹" value={`${stats.track.pointCount}`} unit="点" />
+            <StatCard icon={<Footprints size={13} />} label="我的足迹" value={`${stats.track.pointCount}`} unit="点" />
           </div>
 
           {stats.lastVisit && (
@@ -177,16 +177,16 @@ export default function JourneyPage() {
           </div>
         )}
 
-        {/* GPS 轨迹 */}
+        {/* 我的足迹 */}
         {stats.track.pointCount > 0 && (
           <div className="glass-light rounded-2xl p-4 shadow-card">
             <h2 className="text-sm font-semibold text-forest-600 mb-2 inline-flex items-center gap-1.5">
               <Footprints size={14} className="text-apple-500" />
-              GPS 轨迹
+              我的足迹
             </h2>
             <div className="text-sm text-ink-50 mb-3">
-              {stats.track.totalDistanceKm.toFixed(2)} km · {stats.track.pointCount} 个点
-              {stats.track.startTime && ` · ${new Date(stats.track.startTime).toLocaleDateString('zh-CN')} 起`}
+              共走过 <span className="font-bold text-apple-600">{stats.track.totalDistanceKm.toFixed(2)} km</span> · 记录了 <span className="font-bold text-apple-600">{stats.track.pointCount}</span> 个点
+              {stats.track.startTime && ` · 自 ${new Date(stats.track.startTime).toLocaleDateString('zh-CN')} 起`}
             </div>
             <div className="flex gap-2">
               <Link to="/map" className="flex-1 h-9 rounded-full bg-apple-400 text-cheese-50 text-xs font-medium inline-flex items-center justify-center hover:bg-apple-300 transition shadow-apple">

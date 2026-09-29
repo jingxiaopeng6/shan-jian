@@ -66,7 +66,7 @@ export default function MapPage() {
       {/* ===== 顶部栏：奶酪玻璃 + 青苹果控件 ===== */}
       <div className="absolute top-0 left-0 right-0 z-20 pt-safe">
         <div className="flex items-center justify-between px-3 pt-3">
-          {/* 左侧：返回 + GIS 标签 */}
+          {/* 左侧：返回 + 地图标识 */}
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -77,8 +77,8 @@ export default function MapPage() {
               <ChevronLeft size={20} strokeWidth={2} />
             </button>
             <div className="hidden sm:flex flex-col gap-0.5 px-2.5 py-1.5 glass-light rounded-lg shadow-glass">
-              <span className="text-overline text-apple-600 tracking-wider font-mono font-semibold">3D TERRAIN</span>
-              <span className="text-overline text-ink-50 tracking-wider">ASTER GDEM · 30m</span>
+              <span className="text-overline text-apple-600 tracking-wider font-semibold">立体地形</span>
+              <span className="text-overline text-ink-50 tracking-wider">真实卫星数据</span>
             </div>
           </div>
 
@@ -111,7 +111,7 @@ export default function MapPage() {
               <Navigation size={14} className="text-apple-500" />
               <span className="font-medium">{target.name}</span>
               <span className="text-apple-600 font-bold">{distanceKm.toFixed(2)} km</span>
-              <span className="text-overline text-rock-400">示意直线</span>
+              <span className="text-overline text-rock-400">直线距离</span>
               <button onClick={() => setTargetId('')} className="text-rock-300 hover:text-amber-400 ml-1" aria-label="关闭">
                 <X size={14} />
               </button>
@@ -149,7 +149,7 @@ export default function MapPage() {
                 ))}
               </select>
               {target && (
-                <p className="mt-2 text-caption text-rock-400">直线距离 {distanceKm.toFixed(2)} km · MVP 示意路线</p>
+                <p className="mt-2 text-caption text-rock-400">直线距离 {distanceKm.toFixed(2)} km · 路线规划</p>
               )}
             </div>
           </div>

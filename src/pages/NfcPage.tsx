@@ -98,11 +98,11 @@ export default function NfcPage() {
                 className="mt-6 w-full h-12 rounded-full bg-apple-400 text-cheese-50 text-sm font-semibold hover:bg-apple-300 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95 inline-flex items-center justify-center gap-2 shadow-apple"
               >
                 <Nfc size={16} />
-                {nfc.supported ? '开始扫描 NFC' : '当前浏览器不支持 Web NFC'}
+                {nfc.supported ? '开始扫描 NFC' : '当前浏览器不支持 NFC 感应'}
               </button>
               {!nfc.supported && (
                 <p className="mt-2 text-caption text-rock-400">
-                  Web NFC API 仅支持 Android Chrome 81+
+                  仅安卓手机 Chrome 浏览器支持 NFC 感应
                 </p>
               )}
             </>

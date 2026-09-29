@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Mountain, Camera, Eye, MapPin, Compass } from 'lucide-react'
+import { ArrowRight, Mountain, Camera, Eye, MapPin, Compass, Award } from 'lucide-react'
 import Button from '../components/ui/Button'
 
 export default function HomePage() {
@@ -103,28 +103,29 @@ export default function HomePage() {
           </Button>
         </Link>
 
-        {/* 功能列表 — 玻璃卡片 */}
+        {/* 功能列表 — 5 个核心入口 */}
         <div className="mt-7 w-full max-w-md">
           <div className="glass-light rounded-2xl p-4">
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               <FeatureChip icon={<Mountain size={16} />} label="3D 地图" to="/map" />
               <FeatureChip icon={<Camera size={16} />} label="AR 看山" to="/ar" />
               <FeatureChip icon={<Eye size={16} />} label="视域分析" to="/viewshed" />
-              <FeatureChip icon={<Compass size={16} />} label="NFC 探索" to="/nfc" />
+              <FeatureChip icon={<Compass size={16} />} label="打卡" to="/nfc" />
+              <FeatureChip icon={<Award size={16} />} label="成就档案" to="/journey" />
             </div>
           </div>
         </div>
 
-        {/* 底部 GIS 说明 */}
+        {/* 底部说明 — 通俗易懂 */}
         <div className="mt-6 w-full max-w-md">
           <div className="flex items-center justify-center gap-2 text-caption text-rock-400">
             <span className="inline-flex items-center gap-1">
               <MapPin size={10} className="text-apple-500" />
-              <span>3D TERRAIN · ASTER GDEM · 30m</span>
+              <span>真实卫星地形数据 · 立体可见</span>
             </span>
           </div>
           <p className="mt-1.5 text-overline text-rock-400 text-center tracking-wider">
-            GIS 是《山见》的核心底座
+            每一座山都有它的故事
           </p>
         </div>
       </div>
