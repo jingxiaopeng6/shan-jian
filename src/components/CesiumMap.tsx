@@ -64,11 +64,13 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
     geoTiffTerrain.readyPromise.then(() => {
       viewer.terrainProvider = geoTiffTerrain
       setTerrainReady(true)
-      // false：让贴地的点和标签不被山体遮挡（配合 disableDepthTestDistance: Infinity）
-      // 这样地标准确贴在 3D 山顶，且始终可见
-      viewer.scene.globe.depthTestAgainstTerrain = false
+      // true：让被山体遮挡的地标隐藏（更真实，背面山头不显示）
+      viewer.scene.globe.depthTestAgainstTerrain = true
+      // DEM 加载完成后，用 dem 真实高程创建地标准确定位在山顶
+      addPeakAndAttractionEntities(viewer, demProvider, isMobile)
     }).catch(() => {
-      // DEM 加载失败时保持椭球体地形
+      // DEM 加载失败时用 CLAMP_TO_GROUND（贴椭球体表面）
+      addPeakAndAttractionEntities(viewer, null, isMobile)
     })
     ;(viewer.cesiumWidget.creditContainer as HTMLElement).style.display = 'none'
 
@@ -98,95 +100,14 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
       duration: 0.01
     })
 
-    // 标注尺寸配置 —— 跨平台字体 + 更大字号 + 更粗字重
-    // PingFang SC 仅 macOS 有；Noto Sans SC 项目已配，Windows 上有 Microsoft YaHei 回退
+    // 标注尺寸配置（仅用户位置用，山峰+景点在 addPeakAndAttractionEntities 内创建）
     const LABEL_FONT_FAMILY = '"Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
-    const labelPixelOffset = isMobile ? -18 : -20
-    const pointSize = isMobile ? 9 : 11
-    const peakLabelFont = isMobile
-      ? `700 13px ${LABEL_FONT_FAMILY}`
-      : `700 15px ${LABEL_FONT_FAMILY}`
-    const attrLabelFont = isMobile
-      ? `600 12px ${LABEL_FONT_FAMILY}`
-      : `600 13px ${LABEL_FONT_FAMILY}`
-    // 标签背景：奶酪半透明，确保任何底色上都清晰
     const labelBgColor = new Cesium.Color(0.965, 0.945, 0.910, 0.88)  // #F4F1E8 奶酪
     const labelBgPadding = new Cesium.Cartesian2(8, 6)
-    // 描边色：深森林，比白色在浅色地形上更稳
     const labelOutlineColor = Cesium.Color.fromCssColorString('#1F2818')
-    // 山峰点色：青苹果深
-    const peakPointColor = Cesium.Color.fromCssColorString('#577A18')
-    const peakOutlineColor = Cesium.Color.fromCssColorString('#F4F1E8')
 
-    // 山峰标注 —— CLAMP_TO_GROUND 让点准确贴在 DEM 渲染的山顶表面
-    // 配合 disableDepthTestDistance: Infinity 让点和标签不被山体遮挡，始终可见
-    peaks.forEach((p) => {
-      const entity = viewer.entities.add({
-        id: `peak-${p.id}`,
-        name: `${p.name}\n${p.elevation} m`,
-        position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat),
-        point: {
-          pixelSize: pointSize,
-          color: peakPointColor,
-          outlineColor: peakOutlineColor,
-          outlineWidth: 2,
-          // CLAMP_TO_GROUND：贴 DEM 表面，点准确落在 3D 山顶上
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          // 始终可见，不被地形遮挡
-          disableDepthTestDistance: Number.POSITIVE_INFINITY
-        },
-        label: {
-          text: `${p.name}  ${p.elevation}m`,
-          font: peakLabelFont,
-          fillColor: Cesium.Color.fromCssColorString('#1F2818'),
-          outlineColor: labelOutlineColor,
-          outlineWidth: 3,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(0, labelPixelOffset),
-          // 标签也贴地，与点保持空间一致
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-          // 加奶酪背景，彻底解决与地形混淆
-          showBackground: true,
-          backgroundColor: labelBgColor,
-          backgroundPadding: labelBgPadding
-        }
-      })
-      ;(entity as any).peakId = p.id
-    })
-
-    // 景点标注 —— 同样贴 DEM 表面，确保落在 3D 地形上
-    attractions.forEach((a) => {
-      viewer.entities.add({
-        id: `attr-${a.id}`,
-        name: a.name,
-        position: Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude),
-        point: {
-          pixelSize: isMobile ? 7 : 9,
-          color: a.type === 'service'
-            ? Cesium.Color.fromCssColorString('#D97B3D')   // 暮色橙：服务设施
-            : Cesium.Color.fromCssColorString('#8DB838'),  // 青苹果：景点
-          outlineColor: Cesium.Color.fromCssColorString('#F4F1E8'),
-          outlineWidth: 1.5,
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY
-        },
-        label: {
-          text: a.name,
-          font: attrLabelFont,
-          fillColor: Cesium.Color.fromCssColorString('#1F2818'),
-          outlineColor: labelOutlineColor,
-          outlineWidth: 2.5,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(0, isMobile ? -16 : -18),
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-          showBackground: true,
-          backgroundColor: labelBgColor,
-          backgroundPadding: labelBgPadding
-        }
-      })
-    })
+    // 山峰 + 景点标注在 DEM 加载完成后由 addPeakAndAttractionEntities 创建
+    // （见 useEffect 内 geoTiffTerrain.readyPromise 回调）
 
     // 用户位置标注（可动态更新）—— GPS 点用暮色橙醒目
     const pos = userPosition ?? { lat: defaultUserPosition.lat, lng: defaultUserPosition.lng }
@@ -200,7 +121,7 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
         outlineColor: Cesium.Color.fromCssColorString('#F4F1E8'),
         outlineWidth: 2.5,
         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
+        disableDepthTestDistance: Number.POSITIVE_INFINITY  // 用户位置始终可见
       },
       label: {
         text: '📍 我的位置',
@@ -327,4 +248,119 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
       )}
     </div>
   )
+}
+
+/**
+ * 创建山峰 + 景点标注
+ *
+ * 关键：从 DEM GeoTIFF 直接采样该坐标的真实高程，让点准确显示在 DEM 渲染的山顶上。
+ * - demProvider 可用：用 getElevation(lat,lng) 取真实高程，heightReference=NONE（绝对高度）
+ *   这样点和 DEM 渲染的山顶完全重合，没有偏移
+ * - demProvider 不可用：CLAMP_TO_GROUND 贴椭球体表面（回退）
+ *
+ * 深度测试：不设 disableDepthTestDistance，让点参与深度测试，被山体遮挡时自动隐藏
+ * （更真实，背面的山头标签不会穿透显示）
+ */
+function addPeakAndAttractionEntities(
+  viewer: Cesium.Viewer,
+  demProvider: DEMTerrainProvider | null,
+  isMobile: boolean
+) {
+  // 标注样式配置（与原代码一致）
+  const LABEL_FONT_FAMILY = '"Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
+  const labelPixelOffset = isMobile ? -18 : -20
+  const pointSize = isMobile ? 9 : 11
+  const peakLabelFont = isMobile ? `700 13px ${LABEL_FONT_FAMILY}` : `700 15px ${LABEL_FONT_FAMILY}`
+  const attrLabelFont = isMobile ? `600 12px ${LABEL_FONT_FAMILY}` : `600 13px ${LABEL_FONT_FAMILY}`
+  const labelBgColor = new Cesium.Color(0.965, 0.945, 0.910, 0.88)
+  const labelBgPadding = new Cesium.Cartesian2(8, 6)
+  const labelOutlineColor = Cesium.Color.fromCssColorString('#1F2818')
+  const peakPointColor = Cesium.Color.fromCssColorString('#577A18')
+  const peakOutlineColor = Cesium.Color.fromCssColorString('#F4F1E8')
+
+  // 山峰标注
+  peaks.forEach((p) => {
+    // 关键：从 DEM 取该坐标真实高程
+    let elevation = p.elevation
+    let heightRef = Cesium.HeightReference.NONE
+    if (demProvider && demProvider.isReady) {
+      const demElev = demProvider.getElevation(p.lat, p.lng)
+      if (demElev != null && !Number.isNaN(demElev)) {
+        elevation = demElev
+      }
+    } else {
+      // DEM 不可用时贴地（回退）
+      heightRef = Cesium.HeightReference.CLAMP_TO_GROUND
+    }
+
+    const entity = viewer.entities.add({
+      id: `peak-${p.id}`,
+      name: `${p.name}\n${p.elevation} m`,
+      position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat, elevation),
+      point: {
+        pixelSize: pointSize,
+        color: peakPointColor,
+        outlineColor: peakOutlineColor,
+        outlineWidth: 2,
+        heightReference: heightRef,
+        // 不设 disableDepthTestDistance，让点参与深度测试，被山体遮挡时隐藏
+      },
+      label: {
+        text: `${p.name}  ${p.elevation}m`,
+        font: peakLabelFont,
+        fillColor: Cesium.Color.fromCssColorString('#1F2818'),
+        outlineColor: labelOutlineColor,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, labelPixelOffset),
+        heightReference: heightRef,
+        showBackground: true,
+        backgroundColor: labelBgColor,
+        backgroundPadding: labelBgPadding
+      }
+    })
+    ;(entity as any).peakId = p.id
+  })
+
+  // 景点标注
+  attractions.forEach((a) => {
+    let elevation = a.elevation
+    let heightRef = Cesium.HeightReference.NONE
+    if (demProvider && demProvider.isReady) {
+      const demElev = demProvider.getElevation(a.latitude, a.longitude)
+      if (demElev != null && !Number.isNaN(demElev)) {
+        elevation = demElev
+      }
+    } else {
+      heightRef = Cesium.HeightReference.CLAMP_TO_GROUND
+    }
+
+    viewer.entities.add({
+      id: `attr-${a.id}`,
+      name: a.name,
+      position: Cesium.Cartesian3.fromDegrees(a.longitude, a.latitude, elevation),
+      point: {
+        pixelSize: isMobile ? 7 : 9,
+        color: a.type === 'service'
+          ? Cesium.Color.fromCssColorString('#D97B3D')
+          : Cesium.Color.fromCssColorString('#8DB838'),
+        outlineColor: Cesium.Color.fromCssColorString('#F4F1E8'),
+        outlineWidth: 1.5,
+        heightReference: heightRef
+      },
+      label: {
+        text: a.name,
+        font: attrLabelFont,
+        fillColor: Cesium.Color.fromCssColorString('#1F2818'),
+        outlineColor: labelOutlineColor,
+        outlineWidth: 2.5,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, isMobile ? -16 : -18),
+        heightReference: heightRef,
+        showBackground: true,
+        backgroundColor: labelBgColor,
+        backgroundPadding: labelBgPadding
+      }
+    })
+  })
 }
