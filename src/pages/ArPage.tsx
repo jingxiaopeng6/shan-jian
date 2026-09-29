@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Crosshair, MapPin, Compass, X, ChevronRight, Camera, Eye, Navigation } from 'lucide-react'
 import { defaultUserPosition, getPeakById, getVisiblePeaks } from '../data/mock'
 import ArPeakBadge, { type HeadingKey } from '../components/ArPeakBadge'
 import CameraView from '../components/CameraView'
@@ -124,9 +125,9 @@ export default function ArPage() {
   const handleEnterCamera = async () => {
     setMode('camera')
     await camera.start()
-    // 首次进入摄像头模式时显示提示
+    // 首次进入摄像头模式时显示提示（约 1.5 秒自动消失）
     setShowArHint(true)
-    setTimeout(() => setShowArHint(false), 4000)
+    setTimeout(() => setShowArHint(false), 1500)
   }
 
   const handleExitCamera = () => {
@@ -135,7 +136,7 @@ export default function ArPage() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen bg-ink">
       {/* ======== 摄像头模式：全屏沉浸式 ======== */}
       {mode === 'camera' && (
         <div className="fixed inset-0 z-40 bg-black">
@@ -150,35 +151,38 @@ export default function ArPage() {
           {/* AR Overlay 层：摄像头画面上叠加山峰 + 状态 */}
           {camera.status === 'streaming' && (
             <>
-              {/* AR 首次使用提示 */}
+              {/* AR 首次使用 onboarding —— 极简、1.5 秒自动消失 */}
               {showArHint && (
-                <div className="pointer-events-none absolute inset-0 z-[35] flex items-center justify-center">
-                  <div className="text-center bg-black/50 backdrop-blur-sm rounded-2xl px-6 py-4 animate-fade-out">
-                    <div className="text-3xl mb-2">🏔️</div>
-                    <p className="text-white text-sm font-medium">转动手机，寻找远处的山峰</p>
-                    <p className="text-white/70 text-[11px] mt-1">正在根据当前位置和手机方向识别山峰</p>
+                <div className="pointer-events-none absolute inset-0 z-[35] flex items-center justify-center px-6">
+                  <div className="text-center glass-panel rounded-3xl px-8 py-6 animate-fade-out">
+                    <Crosshair className="mx-auto mb-3 text-gold" size={32} strokeWidth={1.5} />
+                    <p className="text-mist text-sm font-medium tracking-wide">寻找山峰</p>
+                    <p className="text-mist/60 text-[11px] mt-1.5">转动手机，让山峰进入视野</p>
                   </div>
                 </div>
               )}
-              {/* 顶部：📍 GPS + 🧭 方向 状态 + 方位刻度 */}
-              <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-3 pb-2 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent">
+
+              {/* 顶部状态栏 —— 极简玻璃 chip */}
+              <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-safe pb-3 flex items-start justify-between gap-3 bg-gradient-to-b from-black/50 to-transparent">
                 {/* 左侧：GPS + Compass 状态 */}
                 <div className="pointer-events-auto flex flex-col gap-1.5">
                   <GeoStatusChip location={location} />
                   <CompassStatusChip orientation={orientation} />
                 </div>
-                {/* 右侧：方位刻度（原功能） */}
-                <div className="pointer-events-none flex items-center gap-3 text-white/80 text-[11px] tracking-widest pt-1">
+                {/* 右侧：方位刻度 */}
+                <div className="pointer-events-none flex items-center gap-2 text-mist/80 text-[11px] tracking-[0.2em] pt-1 font-mono">
+                  <Navigation size={10} className="text-gold/70" />
                   <span>{az(currentHeading)}</span>
                 </div>
               </div>
 
-              {/* 十字准星 */}
+              {/* 十字准星 —— 极简 */}
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <div className="relative w-20 h-20">
-                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/60" />
-                  <div className="absolute top-1/2 left-0 right-0 h-px bg-white/60" />
-                  <div className="absolute inset-4 rounded-full border border-white/40" />
+                <div className="relative w-16 h-16">
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/40" />
+                  <div className="absolute top-1/2 left-0 right-0 h-px bg-white/40" />
+                  <div className="absolute inset-3 rounded-full border border-white/30" />
+                  <div className="absolute inset-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/80" />
                 </div>
               </div>
 
@@ -218,7 +222,7 @@ export default function ArPage() {
                     })}
               </div>
 
-              {/* AR 山峰信息卡（点击 badge 后弹出） */}
+              {/* AR 山峰信息卡（点击 badge 后弹出）—— 半透明玻璃信息卡 */}
               {selectedPeakId && (hasRealAR || visible.some(v => v.peakId === selectedPeakId)) && (() => {
                 const peak = getPeakById(selectedPeakId)
                 if (!peak) return null
@@ -227,54 +231,78 @@ export default function ArPage() {
                 const distKm = overlayItem ? overlayItem.distanceKm : visiblePeak?.distanceKm ?? 0
                 const bearingDeg = overlayItem ? overlayItem.bearingDeg : visiblePeak?.azimuthDeg ?? 0
                 return (
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-20 z-30 w-[90%] max-w-sm rounded-xl bg-white/95 backdrop-blur border border-forest-200 shadow-soft p-3 pointer-events-auto">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="font-serif text-forest-900 text-base font-semibold">{peak.name}</span>
-                        <span className="ml-2 text-xs text-sand-600">{peak.elevation} m · {distKm.toFixed(1)} km · {azimuthCompassShort(bearingDeg)}</span>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-30 w-[90%] max-w-sm pointer-events-auto animate-enter-fade">
+                    <div className="glass-panel rounded-2xl p-4 shadow-2xl">
+                      {/* 顶部：关闭 + 山峰名 */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-serif text-mist text-lg font-semibold">{peak.name}</h3>
+                          <p className="mt-0.5 text-gold text-xs font-medium tabular-nums">{peak.elevation} m</p>
+                        </div>
+                        <button
+                          onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }}
+                          className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-mist/60 hover:text-mist transition"
+                          aria-label="关闭"
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
-                      <button onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }} className="text-stone2-400 hover:text-red-500 text-sm">✕</button>
-                    </div>
-                    <div className="mt-1 flex items-center gap-1.5 text-[9px] text-forest-500 bg-forest-50 border border-forest-100 rounded px-1.5 py-0.5 w-fit">
-                      <span className="w-1 h-1 rounded-full bg-forest-400" />
-                      GIS 空间定位 · 距离 {distKm.toFixed(1)}km · 方位 {Math.round(bearingDeg)}° · 海拔 {peak.elevation}m
-                    </div>
-                    <div className="mt-2 flex gap-2">
+
+                      {/* 距离 + 方位 */}
+                      <div className="mt-3 flex items-center gap-4 text-[11px] text-mist/70">
+                        <span className="flex items-center gap-1.5 tabular-nums">
+                          <MapPin size={11} className="text-moss" />
+                          距离 {distKm.toFixed(1)} km
+                        </span>
+                        <span className="flex items-center gap-1.5 tabular-nums">
+                          <Compass size={11} className="text-moss" />
+                          {azimuthCompassShort(bearingDeg)} {Math.round(bearingDeg)}°
+                        </span>
+                      </div>
+
+                      {/* 视域分析结果（如果有） */}
+                      {viewshedResult && (
+                        <div className={`mt-3 pt-3 border-t border-white/10 text-xs ${viewshedResult.visible ? 'text-moss' : 'text-red-400'}`}>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${viewshedResult.visible ? 'bg-moss' : 'bg-red-500'} pulse-dot`} />
+                            {viewshedResult.visible ? '可见 · 无地形遮挡' : '不可见 · 被地形遮挡'}
+                          </div>
+                          <div className="mt-1 text-[10px] text-mist/50 tabular-nums">
+                            距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m
+                          </div>
+                          {viewshedResult.obstruction && (
+                            <div className="mt-1 text-[10px] text-red-400/80 leading-relaxed">
+                              在 {formatDistanceM(viewshedResult.obstruction.distance)} 处地形超出视线 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* CTA：为什么能看到？ */}
                       <button
                         onClick={() => handleViewshed(selectedPeakId)}
                         disabled={viewshedLoading}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-forest-700 text-white text-xs font-medium hover:bg-forest-800 disabled:opacity-60 transition"
+                        className="mt-3 w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-gold/90 text-ink text-xs font-semibold hover:bg-gold disabled:opacity-60 transition active:scale-[0.98]"
                       >
-                        {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '🔍 视域分析'}
-                      </button>
-                      <button
-                        onClick={() => navigate(`/peak/${selectedPeakId}`)}
-                        className="flex-1 inline-flex items-center justify-center h-8 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
-                      >查看详情</button>
-                    </div>
-                    <p className="mt-1 text-[10px] text-stone2-400">基于 DEM 地形计算视线遮挡</p>
-                    {/* 内联视域分析结果 */}
-                    {viewshedResult && (
-                      <div className={`mt-2 pt-2 border-t border-forest-100 text-xs ${viewshedResult.visible ? 'text-forest-700' : 'text-red-600'}`}>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full ${viewshedResult.visible ? 'bg-forest-600' : 'bg-red-500'} animate-pulse`} />
-                          {viewshedResult.visible ? '🟢 可见：无地形遮挡' : '🔴 不可见：被地形遮挡'}
-                        </div>
-                        <div className="mt-1 text-[11px] text-stone2-500">
-                          距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m · 方位 {Math.round(viewshedResult.bearing)}°
-                        </div>
-                        {viewshedResult.obstruction && (
-                          <div className="mt-1 text-[11px] text-red-500 leading-4">
-                            在 {formatDistanceM(viewshedResult.obstruction.distance)} 处，地形（{viewshedResult.obstruction.terrainElevation.toFixed(0)} m）超过视线（{viewshedResult.obstruction.lineOfSightElevation.toFixed(0)} m），超出 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
-                          </div>
+                        {viewshedLoading ? (
+                          <>
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-ink/40 border-t-ink animate-spin" />
+                            分析中…
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={13} />
+                            {viewshedResult ? '重新分析视域' : '为什么能看到？'}
+                            <ChevronRight size={13} />
+                          </>
                         )}
-                      </div>
-                    )}
+                      </button>
+                    </div>
                   </div>
                 )
               })()}
 
-              {/* 底部：视角切换按钮 + 关闭 */}
+              {/* 底部：方位切换 + 关闭 */}
               <div className="absolute left-0 right-0 bottom-0 px-4 pt-3 pb-safe bg-gradient-to-t from-black/60 to-transparent">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex flex-wrap gap-1.5">
@@ -283,10 +311,10 @@ export default function ArPage() {
                         key={k}
                         type="button"
                         onClick={() => setHeading(k)}
-                        className={`h-8 px-3 rounded-full text-[11px] border transition ${
+                        className={`h-8 px-3 rounded-full text-[11px] border transition active:scale-95 ${
                           heading === k
-                            ? 'bg-white text-forest-900 border-white font-medium'
-                            : 'bg-white/10 text-white border-white/30 hover:bg-white/20'
+                            ? 'bg-mist text-ink border-mist font-medium'
+                            : 'bg-white/10 text-mist border-white/20 hover:bg-white/20'
                         }`}
                       >
                         {labelOf(k)}
@@ -301,222 +329,253 @@ export default function ArPage() {
         </div>
       )}
 
-      {/* ======== 模拟取景器模式（默认） ======== */}
+      {/* ======== 模拟取景器模式（默认）—— 深色沉浸式 ======== */}
       {mode === 'simulated' && (
-        <div className="max-w-3xl mx-auto px-3 py-4 sm:py-6">
-          {/* 顶部状态栏（简化：仅标题 + 朝向 + DEMO 标识） */}
-          <div className="flex items-center justify-between px-2 pb-3">
-            <div>
-              <div className="text-xs text-stone2-400">
-                模拟摄像头 · {defaultUserPosition.name}
+        <div className="min-h-screen bg-ink text-mist">
+          <div className="max-w-3xl mx-auto px-3 py-4 sm:py-6 safe-top">
+            {/* 顶部状态栏 */}
+            <div className="flex items-center justify-between px-2 pb-3">
+              <div>
+                <div className="text-[10px] text-mist/40 tracking-wider uppercase">AR 看山</div>
+                <div className="text-sm text-mist font-medium mt-0.5">
+                  朝向 <span className="text-gold">{labelOf(heading)}</span>
+                </div>
               </div>
-              <div className="text-sm text-forest-800 font-medium mt-0.5">
-                AR 看山 · 朝向 {labelOf(heading)}
-              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 text-mist/70 text-[10px] px-2.5 py-1 border border-white/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold pulse-dot" />
+                演示模式
+              </span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-forest-700/10 text-forest-700 text-[10px] px-2 py-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-forest-600" />
-              DEMO
-            </span>
-          </div>
 
-          {/* 取景器 */}
-          <div
-            className="relative rounded-2xl overflow-hidden bg-black border border-forest-900/20 shadow-soft"
-            style={{ aspectRatio: '9 / 16' }}
-            role="img"
-            aria-label="模拟 AR 摄像头画面"
-            data-testid="ar-viewfinder"
-          >
+            {/* 取景器 —— 深色山景 */}
             <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(180deg, #cfd8d2 0%, #e8e5d6 48%, #b8bda6 100%)'
-              }}
+              className="relative rounded-3xl overflow-hidden bg-ink border border-white/5 shadow-2xl"
+              style={{ aspectRatio: '9 / 16' }}
+              role="img"
+              aria-label="模拟 AR 摄像头画面"
+              data-testid="ar-viewfinder"
             >
-              <svg viewBox="0 0 900 1600" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
-                <path d="M0,900 L90,840 L180,900 L290,820 L400,890 L520,810 L640,890 L760,830 L900,900 L900,1600 L0,1600 Z" fill="#8fa18d" opacity="0.7" />
-                <path d="M0,1060 L120,980 L240,1050 L360,970 L480,1050 L600,990 L720,1060 L840,1000 L900,1030 L900,1600 L0,1600 Z" fill="#5c7260" opacity="0.85" />
-                <path d="M0,1280 Q 220 1200 450 1260 T 900 1250 L 900 1600 L 0 1600 Z" fill="#3a5040" />
-                <path d="M0,520 Q 300 490 500 530 T 900 510 L 900 560 Q 620 570 450 560 T 0 560 Z" fill="#ffffff" opacity="0.35" />
-              </svg>
-            </div>
-
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="relative w-20 h-20">
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/70" />
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-white/70" />
-                <div className="absolute inset-4 rounded-full border border-white/50" />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    'linear-gradient(180deg, #1a2820 0%, #17251D 35%, #0f1815 70%, #0a0f0d 100%)'
+                }}
+              >
+                <svg viewBox="0 0 900 1600" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
+                  {/* 远山 */}
+                  <path d="M0,900 L90,840 L180,900 L290,820 L400,890 L520,810 L640,890 L760,830 L900,900 L900,1600 L0,1600 Z" fill="#2a3d32" opacity="0.7" />
+                  {/* 中景 */}
+                  <path d="M0,1060 L120,980 L240,1050 L360,970 L480,1050 L600,990 L720,1060 L840,1000 L900,1030 L900,1600 L0,1600 Z" fill="#1a2820" opacity="0.85" />
+                  {/* 前景 */}
+                  <path d="M0,1280 Q 220 1200 450 1260 T 900 1250 L 900 1600 L 0 1600 Z" fill="#0f1815" />
+                  {/* 雾 */}
+                  <path d="M0,520 Q 300 490 500 530 T 900 510 L 900 560 Q 620 570 450 560 T 0 560 Z" fill="#F4F1E8" opacity="0.06" />
+                  {/* 星点 */}
+                  <circle cx="120" cy="180" r="1.2" fill="#F4F1E8" opacity="0.6" />
+                  <circle cx="280" cy="240" r="0.8" fill="#F4F1E8" opacity="0.4" />
+                  <circle cx="620" cy="160" r="1.0" fill="#F4F1E8" opacity="0.5" />
+                  <circle cx="780" cy="280" r="0.9" fill="#F4F1E8" opacity="0.4" />
+                </svg>
               </div>
-            </div>
 
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-10 flex items-end justify-between px-4 pb-1 text-white/90 text-[11px] tracking-widest bg-gradient-to-b from-black/40 to-transparent">
-              <span>◀ {leftAz(currentHeading - 60)}</span>
-              <span className="text-sand-200">▲ {az(currentHeading)}</span>
-              <span>{rightAz(currentHeading + 60)} ▶</span>
-            </div>
+              {/* 十字准星 */}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="relative w-16 h-16">
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/50" />
+                  <div className="absolute top-1/2 left-0 right-0 h-px bg-white/50" />
+                  <div className="absolute inset-3 rounded-full border border-white/30" />
+                  <div className="absolute inset-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/80" />
+                </div>
+              </div>
 
-            {visible.map((v) => {
-              const peak = getPeakById(v.peakId)
-              if (!peak) return null
-              let offset = v.azimuthDeg - currentHeading
-              while (offset > 180) offset -= 360
-              while (offset < -180) offset += 360
-              const clamped = Math.max(-60, Math.min(60, offset))
-              const leftPct = 8 + ((clamped + 60) / 120) * 84
-              const verticalPct = 25 + ((v.distanceKm) / 8) * 40
-              return (
-                <ArPeakBadge
-                  key={v.peakId}
-                  peak={peak}
-                  visiblePeak={v}
-                  highlight={selectedPeakId === v.peakId || highlightPeakId === v.peakId}
-                  style={{ left: `${leftPct}%`, top: `${verticalPct}%` }}
-                  onClick={() => { setSelectedPeakId(v.peakId); setViewshedResult(null) }}
-                />
-              )
-            })}
+              {/* 顶部方位刻度 */}
+              <div className="pointer-events-none absolute top-0 left-0 right-0 pt-2 pb-2 px-4 flex items-end justify-between text-mist/70 text-[11px] tracking-widest font-mono bg-gradient-to-b from-black/40 to-transparent">
+                <span>◀ {leftAz(currentHeading - 60)}</span>
+                <span className="text-gold">▲ {az(currentHeading)}</span>
+                <span>{rightAz(currentHeading + 60)} ▶</span>
+              </div>
 
-            {/* AR 山峰信息卡（模拟模式） */}
-            {selectedPeakId && visible.some(v => v.peakId === selectedPeakId) && (() => {
-              const peak = getPeakById(selectedPeakId)
-              if (!peak) return null
-              const vpeak = visible.find(v => v.peakId === selectedPeakId)!
-              return (
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-20 z-30 w-[90%] max-w-sm rounded-xl bg-white/95 backdrop-blur border border-forest-200 shadow-soft p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="font-serif text-forest-900 text-base font-semibold">{peak.name}</span>
-                      <span className="ml-2 text-xs text-sand-600">{peak.elevation} m · {vpeak.distanceKm.toFixed(1)} km · {azimuthCompassShort(vpeak.azimuthDeg)}</span>
-                    </div>
-                    <button onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }} className="text-stone2-400 hover:text-red-500 text-sm">✕</button>
-                  </div>
-                  <div className="mt-1 flex items-center gap-1.5 text-[9px] text-forest-500 bg-forest-50 border border-forest-100 rounded px-1.5 py-0.5 w-fit">
-                    <span className="w-1 h-1 rounded-full bg-forest-400" />
-                    GIS 空间定位 · 距离 {vpeak.distanceKm.toFixed(1)}km · 方位 {Math.round(vpeak.azimuthDeg)}° · 海拔 {peak.elevation}m
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      onClick={() => handleViewshed(selectedPeakId)}
-                      disabled={viewshedLoading}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-forest-700 text-white text-xs font-medium hover:bg-forest-800 disabled:opacity-60 transition"
-                    >
-                      {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '🔍 视域分析'}
-                    </button>
-                    <button
-                      onClick={() => navigate(`/peak/${selectedPeakId}`)}
-                      className="flex-1 inline-flex items-center justify-center h-8 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
-                    >查看详情</button>
-                  </div>
-                  <p className="mt-1 text-[10px] text-stone2-400">基于 DEM 地形计算视线遮挡</p>
-                  {viewshedResult && (
-                    <div className={`mt-2 pt-2 border-t border-forest-100 text-xs ${viewshedResult.visible ? 'text-forest-700' : 'text-red-600'}`}>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${viewshedResult.visible ? 'bg-forest-600' : 'bg-red-500'} animate-pulse`} />
-                        {viewshedResult.visible ? '🟢 可见：无地形遮挡' : '🔴 不可见：被地形遮挡'}
+              {/* 山峰 badge */}
+              {visible.map((v) => {
+                const peak = getPeakById(v.peakId)
+                if (!peak) return null
+                let offset = v.azimuthDeg - currentHeading
+                while (offset > 180) offset -= 360
+                while (offset < -180) offset += 360
+                const clamped = Math.max(-60, Math.min(60, offset))
+                const leftPct = 8 + ((clamped + 60) / 120) * 84
+                const verticalPct = 25 + ((v.distanceKm) / 8) * 40
+                return (
+                  <ArPeakBadge
+                    key={v.peakId}
+                    peak={peak}
+                    visiblePeak={v}
+                    highlight={selectedPeakId === v.peakId || highlightPeakId === v.peakId}
+                    style={{ left: `${leftPct}%`, top: `${verticalPct}%` }}
+                    onClick={() => { setSelectedPeakId(v.peakId); setViewshedResult(null) }}
+                  />
+                )
+              })}
+
+              {/* AR 山峰信息卡（模拟模式）—— 半透明玻璃信息卡 */}
+              {selectedPeakId && visible.some(v => v.peakId === selectedPeakId) && (() => {
+                const peak = getPeakById(selectedPeakId)
+                if (!peak) return null
+                const vpeak = visible.find(v => v.peakId === selectedPeakId)!
+                return (
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-30 w-[90%] max-w-sm animate-enter-fade">
+                    <div className="glass-panel rounded-2xl p-4 shadow-2xl">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-serif text-mist text-lg font-semibold">{peak.name}</h3>
+                          <p className="mt-0.5 text-gold text-xs font-medium tabular-nums">{peak.elevation} m</p>
+                        </div>
+                        <button
+                          onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }}
+                          className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-mist/60 hover:text-mist transition"
+                          aria-label="关闭"
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
-                      <div className="mt-1 text-[11px] text-stone2-500">
-                        距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m · 方位 {Math.round(viewshedResult.bearing)}°
+                      <div className="mt-3 flex items-center gap-4 text-[11px] text-mist/70">
+                        <span className="flex items-center gap-1.5 tabular-nums">
+                          <MapPin size={11} className="text-moss" />
+                          距离 {vpeak.distanceKm.toFixed(1)} km
+                        </span>
+                        <span className="flex items-center gap-1.5 tabular-nums">
+                          <Compass size={11} className="text-moss" />
+                          {azimuthCompassShort(vpeak.azimuthDeg)} {Math.round(vpeak.azimuthDeg)}°
+                        </span>
                       </div>
-                      {viewshedResult.obstruction && (
-                        <div className="mt-1 text-[11px] text-red-500 leading-4">
-                          在 {formatDistanceM(viewshedResult.obstruction.distance)} 处，地形超出视线 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
+                      {viewshedResult && (
+                        <div className={`mt-3 pt-3 border-t border-white/10 text-xs ${viewshedResult.visible ? 'text-moss' : 'text-red-400'}`}>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${viewshedResult.visible ? 'bg-moss' : 'bg-red-500'} pulse-dot`} />
+                            {viewshedResult.visible ? '可见 · 无地形遮挡' : '不可见 · 被地形遮挡'}
+                          </div>
+                          <div className="mt-1 text-[10px] text-mist/50 tabular-nums">
+                            距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m
+                          </div>
+                          {viewshedResult.obstruction && (
+                            <div className="mt-1 text-[10px] text-red-400/80 leading-relaxed">
+                              在 {formatDistanceM(viewshedResult.obstruction.distance)} 处地形超出视线 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
+                            </div>
+                          )}
                         </div>
                       )}
+                      <button
+                        onClick={() => handleViewshed(selectedPeakId)}
+                        disabled={viewshedLoading}
+                        className="mt-3 w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-gold/90 text-ink text-xs font-semibold hover:bg-gold disabled:opacity-60 transition active:scale-[0.98]"
+                      >
+                        {viewshedLoading ? (
+                          <>
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-ink/40 border-t-ink animate-spin" />
+                            分析中…
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={13} />
+                            {viewshedResult ? '重新分析视域' : '为什么能看到？'}
+                            <ChevronRight size={13} />
+                          </>
+                        )}
+                      </button>
                     </div>
-                  )}
+                  </div>
+                )
+              })()}
+
+              {/* 底部 —— 摄像头入口 + 山峰数 */}
+              <div className="absolute left-0 right-0 bottom-0 h-16 px-4 flex items-center justify-between bg-gradient-to-t from-ink/80 to-transparent">
+                <span className="text-mist/70 text-[11px]">
+                  共 <span className="text-mist font-medium">{visible.length}</span> 座可见
+                </span>
+                <button
+                  type="button"
+                  onClick={handleEnterCamera}
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full bg-gold text-ink text-xs font-semibold hover:bg-gold/90 transition active:scale-95 shadow-lg"
+                >
+                  <Camera size={13} />
+                  打开摄像头
+                </button>
+              </div>
+            </div>
+
+            {/* 控制面板 —— 深色玻璃 */}
+            <div className="mt-4 glass-panel rounded-2xl p-4">
+              {/* 方位切换 */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {(['N', 'E', 'S', 'W', 'SW'] as HeadingKey[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setHeading(k)}
+                      className={`h-9 px-3.5 rounded-full text-xs border transition active:scale-95 ${
+                        heading === k
+                          ? 'bg-mist text-ink border-mist font-medium'
+                          : 'bg-white/5 text-mist/80 border-white/15 hover:bg-white/10'
+                      }`}
+                    >
+                      {labelOf(k)}
+                    </button>
+                  ))}
                 </div>
-              )
-            })()}
-
-            <div className="absolute left-0 right-0 bottom-0 h-14 px-4 flex items-center justify-between bg-gradient-to-t from-black/60 to-transparent">
-              <span className="text-white/85 text-[11px]">
-                共 {visible.length} 座山峰可见
-              </span>
-              <button
-                type="button"
-                onClick={handleEnterCamera}
-                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-full bg-sand-400 text-forest-900 text-[11px] font-medium hover:bg-sand-300 transition shadow-soft"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="6" width="14" height="12" rx="2" />
-                  <path d="M22 8l-6 4 6 4V8z" />
-                </svg>
-                打开摄像头
-              </button>
-            </div>
-          </div>
-
-          {/* 统一控制面板：方位 + 空间感知 + 视域分析 */}
-          <div className="mt-4 rounded-xl bg-white border border-forest-100 p-3 shadow-soft">
-            {/* 方位切换 */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-wrap gap-1.5">
-                {(['N', 'E', 'S', 'W', 'SW'] as HeadingKey[]).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setHeading(k)}
-                    className={`h-8 px-3 rounded-full text-xs border transition ${
-                      heading === k
-                        ? 'bg-forest-700 text-white border-forest-700'
-                        : 'bg-white text-forest-700 border-forest-200 hover:bg-forest-50'
-                    }`}
-                  >
-                    {labelOf(k)}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => navigate('/viewshed')}
+                  className="text-xs text-gold hover:text-gold/80 whitespace-nowrap font-medium inline-flex items-center gap-1"
+                >
+                  视域分析 <ChevronRight size={12} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => navigate('/viewshed')}
-                className="text-xs text-forest-600 hover:text-forest-800 whitespace-nowrap font-medium"
-              >
-                视域分析 →
-              </button>
-            </div>
 
-            {/* 空间感知按钮组 */}
-            <div className="mt-3 pt-3 border-t border-forest-100 flex items-center gap-2 flex-wrap">
-              <SensingButton
-                label={location.status === 'watching' ? '📍 停止定位' : '📍 获取我的位置'}
-                active={location.status === 'watching'}
-                loading={location.status === 'requesting'}
-                onClick={() => {
-                  if (location.status === 'watching') location.stop()
-                  else location.start()
-                }}
-              />
-              <SensingButton
-                label={orientation.status === 'listening' ? '🧭 停止方向感知' : '🧭 开启方向感知'}
-                active={orientation.status === 'listening'}
-                loading={orientation.status === 'requesting'}
-                onClick={() => {
-                  if (orientation.status === 'listening') orientation.stop()
-                  else orientation.start()
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 调试面板 + 空间模拟测试（仅 dev） */}
-          {import.meta.env.DEV && (
-            <>
-              <DebugPanel location={location} orientation={orientation} overlay={overlay} hasRealAR={hasRealAR} />
-              <SpatialTestPanel location={location} orientation={orientation} onPeaksChange={setOverlayPeaks} />
-            </>
-          )}
-
-          {!isMobile && (
-            <div className="mt-4 rounded-lg bg-forest-50 border border-forest-100 p-3 text-[11px] text-forest-700 leading-relaxed">
-              <div className="font-medium mb-1 text-forest-800">💡 提示</div>
-              <div>真实摄像头 / GPS / 方向传感器功能建议在手机上体验（同一 Wi-Fi + HTTPS 访问）。</div>
-              <div className="mt-1">
-                Stage 3 仅采集真实空间数据，山峰标签仍使用模拟位置 — Stage 4 才会根据真实 heading 让山峰跟随手机移动。
+              {/* 空间感知按钮组 */}
+              <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
+                <SensingButton
+                  label={location.status === 'watching' ? '停止定位' : '获取我的位置'}
+                  icon={<MapPin size={13} />}
+                  active={location.status === 'watching'}
+                  loading={location.status === 'requesting'}
+                  onClick={() => {
+                    if (location.status === 'watching') location.stop()
+                    else location.start()
+                  }}
+                />
+                <SensingButton
+                  label={orientation.status === 'listening' ? '停止方向感知' : '开启方向感知'}
+                  icon={<Compass size={13} />}
+                  active={orientation.status === 'listening'}
+                  loading={orientation.status === 'requesting'}
+                  onClick={() => {
+                    if (orientation.status === 'listening') orientation.stop()
+                    else orientation.start()
+                  }}
+                />
               </div>
             </div>
-          )}
+
+            {/* 调试面板 + 空间模拟测试（仅 dev） */}
+            {import.meta.env.DEV && (
+              <>
+                <DebugPanel location={location} orientation={orientation} overlay={overlay} hasRealAR={hasRealAR} />
+                <SpatialTestPanel location={location} orientation={orientation} onPeaksChange={setOverlayPeaks} />
+              </>
+            )}
+
+            {!isMobile && (
+              <div className="mt-4 glass-panel rounded-2xl p-4 text-[11px] text-mist/60 leading-relaxed">
+                <div className="font-medium mb-1 text-mist/80">提示</div>
+                <div>真实摄像头 / GPS / 方向传感器功能建议在手机上体验（同一 Wi-Fi + HTTPS 访问）。</div>
+                <div className="mt-1 text-mist/50">
+                  Stage 3 仅采集真实空间数据，山峰标签仍使用模拟位置 — Stage 4 才会根据真实 heading 让山峰跟随手机移动。
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -525,14 +584,16 @@ export default function ArPage() {
 
 /* ========= 子组件 ========= */
 
-/** 空间感知主按钮（获取位置 / 开启方向感知） */
+/** 空间感知主按钮（获取位置 / 开启方向感知）—— 深色玻璃风 */
 function SensingButton({
   label,
+  icon,
   active,
   loading,
   onClick
 }: {
   label: string
+  icon: React.ReactNode
   active: boolean
   loading: boolean
   onClick: () => void
@@ -542,19 +603,19 @@ function SensingButton({
       type="button"
       onClick={onClick}
       disabled={loading}
-      className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-xs border transition ${
+      className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-xs border transition active:scale-95 ${
         active
-          ? 'bg-forest-700 text-white border-forest-700 font-medium'
-          : 'bg-white text-forest-700 border-forest-200 hover:bg-forest-50'
+          ? 'bg-gold/15 text-gold border-gold/40 font-medium'
+          : 'bg-white/5 text-mist/80 border-white/15 hover:bg-white/10'
       } ${loading ? 'opacity-60 pointer-events-none' : ''}`}
     >
-      {loading && <span className="w-2.5 h-2.5 rounded-full border-2 border-current border-t-transparent animate-spin" />}
+      {loading ? <span className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" /> : icon}
       {label}
     </button>
   )
 }
 
-/** 正式 UI — GPS 状态 chip（接收 LocationProvider） */
+/** 正式 UI — GPS 状态 chip（接收 LocationProvider）—— 极简玻璃风 */
 function GeoStatusChip({
   location,
   compact
@@ -564,16 +625,16 @@ function GeoStatusChip({
 }) {
   const isActive = location.latLng != null && (location.status === 'watching' || location.status === 'mock')
   if (isActive) {
-    const acc = location.accuracy ?? 5
-    const label = location.isMock ? '📍 模拟位置' : '📍 GPS 已定位'
+    const label = location.isMock ? '模拟位置' : 'GPS 已定位'
     return (
       <button
         type="button"
         onClick={() => location.stop()}
-        className={`inline-flex items-center gap-1.5 rounded-full bg-forest-700/15 text-forest-800 border border-forest-200 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-forest-700/25 transition`}
-        title={`精度 ${Math.round(acc)}m`}
+        className={`inline-flex items-center gap-1.5 rounded-full glass-panel text-mist text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
+        title={`精度 ${Math.round(location.accuracy ?? 5)}m`}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-forest-600 animate-pulse" />
+        <MapPin size={10} className="text-moss" />
+        <span className="w-1 h-1 rounded-full bg-moss pulse-dot" />
         {label}
       </button>
     )
@@ -582,14 +643,15 @@ function GeoStatusChip({
     <button
       type="button"
       onClick={() => location.start()}
-      className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 text-mist/80 border border-white/15 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
     >
-      📍 点此定位
+      <MapPin size={10} />
+      点此定位
     </button>
   )
 }
 
-/** 正式 UI — 方向状态 chip（接收 OrientationProvider） */
+/** 正式 UI — 方向状态 chip（接收 OrientationProvider）—— 极简玻璃风 */
 function CompassStatusChip({
   orientation,
   compact
@@ -598,15 +660,16 @@ function CompassStatusChip({
   compact?: boolean
 }) {
   if (orientation.heading != null) {
-    const label = orientation.isMock ? '🧭 (模拟) ' : '🧭 '
+    const label = orientation.isMock ? '模拟 ' : ''
     return (
       <button
         type="button"
         onClick={() => orientation.stop()}
-        className={`inline-flex items-center gap-1.5 rounded-full bg-forest-700/15 text-forest-800 border border-forest-200 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-forest-700/25 transition`}
+        className={`inline-flex items-center gap-1.5 rounded-full glass-panel text-mist text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
         title={`朝向 ${Math.round(orientation.heading)}°`}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-forest-600 animate-pulse" />
+        <Compass size={10} className="text-moss" />
+        <span className="w-1 h-1 rounded-full bg-moss pulse-dot" />
         {label}{Math.round(orientation.heading)}°
       </button>
     )
@@ -615,14 +678,15 @@ function CompassStatusChip({
     <button
       type="button"
       onClick={() => orientation.start()}
-      className={`inline-flex items-center gap-1.5 rounded-full bg-sand-400/15 text-sand-700 border border-sand-300 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-sand-400/25 transition`}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 text-mist/80 border border-white/15 text-[11px] px-2.5 ${compact ? 'py-0.5' : 'py-1'} hover:bg-white/10 transition`}
     >
-      🧭 点此开启
+      <Compass size={10} />
+      点此开启
     </button>
   )
 }
 
-/** 开发调试面板（接收 Provider） */
+/** 开发调试面板（接收 Provider）—— 深色风 */
 function DebugPanel({
   location,
   orientation,
@@ -635,15 +699,15 @@ function DebugPanel({
   hasRealAR: boolean
 }) {
   return (
-    <div className="mt-4 rounded-xl bg-white border border-forest-100 p-3 text-[11px]">
-      <div className="text-[10px] text-forest-500 font-medium mb-2 tracking-wide">
-        🧪 开发调试面板（DEV ONLY）
+    <div className="mt-4 glass-panel rounded-2xl p-4 text-[11px]">
+      <div className="text-[10px] text-gold font-medium mb-2 tracking-wider">
+        开发调试面板（DEV ONLY）
       </div>
       <div className="grid grid-cols-2 gap-3">
         {/* GPS 区块 */}
         <div>
-          <div className="text-[10px] text-stone2-400 mb-1">📍 GPS{location.isMock ? ' (模拟)' : ''}</div>
-          <div className="font-mono leading-tight text-forest-800">
+          <div className="text-[10px] text-mist/40 mb-1">GPS{location.isMock ? ' (模拟)' : ''}</div>
+          <div className="font-mono leading-tight text-mist/90">
             <Line label="状态" value={location.status} />
             {location.latLng && (
               <>
@@ -659,8 +723,8 @@ function DebugPanel({
         </div>
         {/* Compass 区块 */}
         <div>
-          <div className="text-[10px] text-stone2-400 mb-1">🧭 方向传感器{orientation.isMock ? ' (模拟)' : ''}</div>
-          <div className="font-mono leading-tight text-forest-800">
+          <div className="text-[10px] text-mist/40 mb-1">方向传感器{orientation.isMock ? ' (模拟)' : ''}</div>
+          <div className="font-mono leading-tight text-mist/90">
             <Line label="状态" value={orientation.status} />
             <Line label="自动旋转" value={orientation.isAutoRotating ? 'YES' : 'NO'} />
             {orientation.heading != null && (
@@ -671,22 +735,22 @@ function DebugPanel({
       </div>
 
       {/* Stage 4 AR 计算结果 */}
-      <div className="mt-3 pt-3 border-t border-forest-100">
-        <div className="text-[10px] text-stone2-400 mb-1 flex items-center justify-between">
-          <span>🏔️ Stage 4 AR 山峰定位</span>
-          <span className={hasRealAR ? 'text-forest-600' : 'text-sand-500'}>
+      <div className="mt-3 pt-3 border-t border-white/10">
+        <div className="text-[10px] text-mist/40 mb-1 flex items-center justify-between">
+          <span>Stage 4 AR 山峰定位</span>
+          <span className={hasRealAR ? 'text-moss' : 'text-mist/50'}>
             {hasRealAR ? '● 实时' : '○ 待 位置+Heading'}
           </span>
         </div>
-        <div className="text-[10px] text-stone2-400 mb-1">
+        <div className="text-[10px] text-mist/40 mb-1">
           FOV {overlay.fov}° · 共 {overlay.items.length} 座 · 视野内 {overlay.items.filter(i => i.inFOV).length}
         </div>
-        <div className="space-y-0.5 font-mono leading-tight text-forest-800 max-h-32 overflow-auto">
+        <div className="space-y-0.5 font-mono leading-tight text-mist/90 max-h-32 overflow-auto">
           {overlay.items.length === 0 && (
-            <div className="text-stone2-300">暂无山峰数据（开启测试模式或获取真实 GPS+方向）</div>
+            <div className="text-mist/30">暂无山峰数据（开启测试模式或获取真实 GPS+方向）</div>
           )}
           {overlay.items.map((it) => (
-            <div key={it.peak.id} className={`flex justify-between gap-2 text-[10px] ${it.inFOV ? '' : 'text-stone2-300'}`}>
+            <div key={it.peak.id} className={`flex justify-between gap-2 text-[10px] ${it.inFOV ? '' : 'text-mist/30'}`}>
               <span>{it.peak.name}</span>
               <span>
                 {Math.round(it.bearingDeg)}° · {it.distanceKm.toFixed(1)}km · rel{it.relativeDeg > 0 ? '+' : ''}{Math.round(it.relativeDeg)}° · x{it.screenXPercent.toFixed(0)}% {it.inFOV ? '' : '(OUT)'}
@@ -698,7 +762,7 @@ function DebugPanel({
 
       {/* 简易指南针可视化 */}
       {orientation.heading != null && (
-        <div className="mt-3 pt-3 border-t border-forest-100 flex items-center justify-center">
+        <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-center">
           <CompassVisual heading={orientation.heading} />
         </div>
       )}
@@ -709,7 +773,7 @@ function DebugPanel({
 function Line({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex justify-between gap-3">
-      <span className="text-stone2-400">{label}</span>
+      <span className="text-mist/40">{label}</span>
       <span className="text-right">{value}</span>
     </div>
   )
@@ -719,25 +783,25 @@ function Line({ label, value }: { label: string; value: string | number }) {
 function CompassVisual({ heading }: { heading: number }) {
   const dir = headingToDirection(heading)
   return (
-    <div className="relative w-24 h-24 rounded-full bg-forest-50 border border-forest-200 flex items-center justify-center">
+    <div className="relative w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
       {/* 方位文字 */}
-      <span className="absolute top-1 text-[10px] text-forest-600">N</span>
-      <span className="absolute bottom-1 text-[10px] text-forest-600">S</span>
-      <span className="absolute left-1 text-[10px] text-forest-600">W</span>
-      <span className="absolute right-1 text-[10px] text-forest-600">E</span>
+      <span className="absolute top-1 text-[10px] text-mist/60">N</span>
+      <span className="absolute bottom-1 text-[10px] text-mist/60">S</span>
+      <span className="absolute left-1 text-[10px] text-mist/60">W</span>
+      <span className="absolute right-1 text-[10px] text-mist/60">E</span>
       {/* 箭头 */}
       <div
         className="absolute inset-2 flex items-center justify-center transition-transform duration-100"
         style={{ transform: `rotate(${heading}deg)` }}
       >
-        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[22px] border-l-transparent border-r-transparent border-b-sand-500" />
+        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[22px] border-l-transparent border-r-transparent border-b-gold" />
       </div>
       {/* 中心数字 */}
-      <span className="relative z-10 text-xs font-bold text-forest-800 font-mono">
+      <span className="relative z-10 text-xs font-bold text-mist font-mono">
         {Math.round(heading)}°
       </span>
       {/* 方位 */}
-      <span className="absolute bottom-4 text-[9px] text-forest-600 font-medium">{dir}</span>
+      <span className="absolute bottom-4 text-[9px] text-mist/70 font-medium">{dir}</span>
     </div>
   )
 }
@@ -760,11 +824,11 @@ function DevPanel({
   isMobile: boolean
 }) {
   return (
-    <div className="flex flex-col items-end gap-0.5 text-white/60 text-[9px] leading-tight font-mono text-right">
-      <span>📷 {camera.status}</span>
-      <span>📍 {location.isMock ? 'MOCK ' : ''}{location.latLng ? `${location.latLng.lat.toFixed(4)}, ${location.latLng.lng.toFixed(4)}` : location.status}</span>
-      <span>🧭 {orientation.isMock ? 'MOCK ' : ''}{orientation.heading != null ? `${Math.round(orientation.heading)}°` : orientation.status}</span>
-      <span>Device · {isMobile ? 'Mobile' : 'Desktop'}</span>
+    <div className="flex flex-col items-end gap-0.5 text-mist/50 text-[9px] leading-tight font-mono text-right">
+      <span>cam · {camera.status}</span>
+      <span>{location.isMock ? 'MOCK ' : ''}{location.latLng ? `${location.latLng.lat.toFixed(4)}, ${location.latLng.lng.toFixed(4)}` : location.status}</span>
+      <span>{orientation.isMock ? 'MOCK ' : ''}{orientation.heading != null ? `${Math.round(orientation.heading)}°` : orientation.status}</span>
+      <span>device · {isMobile ? 'Mobile' : 'Desktop'}</span>
     </div>
   )
 }

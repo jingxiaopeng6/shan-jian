@@ -17,7 +17,7 @@ describe('TR-3.2 关键跳转链接', () => {
     expect(cta).toHaveAttribute('href', '/map')
   })
 
-  it('首页「AR 看山」跳转到 /ar', () => {
+  it('首页「AR 看山」功能标签存在（沉浸式 Hero 设计，通过主 CTA 进入）', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>
@@ -25,8 +25,10 @@ describe('TR-3.2 关键跳转链接', () => {
         </Routes>
       </MemoryRouter>
     )
-    const cta = screen.getByRole('link', { name: /^AR 看山$/ })
-    expect(cta).toHaveAttribute('href', '/ar')
+    // 新设计：AR 看山 是功能标签文字，不再是独立链接
+    // 用户通过「开始探索武功山」主 CTA 进入 /map，再从地图访问 AR
+    const label = screen.getByText(/AR 看山/)
+    expect(label).toBeInTheDocument()
   })
 
   it('详情页「视域分析」是 Link，href 含 /viewshed', () => {

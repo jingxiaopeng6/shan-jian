@@ -18,6 +18,11 @@ interface Props {
   onClick?: () => void
 }
 
+/**
+ * AR 山峰标签 —— 极简沉浸式设计
+ * 只显示：山峰名 + 海拔
+ * 高亮时使用日落金强调
+ */
 export default function ArPeakBadge({ peak, visiblePeak, overlay, hidden, highlight, style, onClick }: Props) {
   // 统一数据读取：overlay 优先
   const distanceKm = overlay ? overlay.distanceKm : visiblePeak?.distanceKm ?? 0
@@ -30,40 +35,31 @@ export default function ArPeakBadge({ peak, visiblePeak, overlay, hidden, highli
   const computedStyle: CSSProperties = overlay
     ? { left: `${overlay.screenXPercent}%`, top: '45%', ...style }
     : style ?? {}
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`absolute -translate-x-1/2 -translate-y-full group ${highlight ? 'z-10' : ''}`}
+      className={`absolute -translate-x-1/2 -translate-y-full group transition-transform active:scale-95 ${highlight ? 'z-10' : ''}`}
       style={computedStyle}
       data-testid={`ar-badge-${peak.id}`}
-      aria-label={`${peak.name} ${peak.elevation}米 距离${distanceKm.toFixed(1)}公里`}
+      aria-label={`${peak.name} ${peak.elevation}米 距离${distanceKm.toFixed(1)}公里 方位${azimuthCompass(bearingDeg)}`}
     >
       {/* 连线指示 */}
-      <div className="mx-auto mb-0.5 w-px h-5 bg-white/80" />
-      <div className={`relative min-w-[110px] max-w-[180px] rounded-lg backdrop-blur px-2.5 py-1.5 text-left text-white shadow-soft transition ${
+      <div className={`mx-auto mb-1 w-px h-6 ${highlight ? 'bg-gold/80' : 'bg-white/70'}`} />
+      {/* 极简标签 */}
+      <div className={`relative rounded-full backdrop-blur-md px-3 py-1.5 text-center text-white shadow-lg transition ${
         highlight
-          ? 'bg-sand-500/90 border-2 border-sand-300 ring-2 ring-sand-300/50 animate-pulse'
-          : 'bg-forest-900/80 border border-white/15 group-hover:bg-forest-800/90'
+          ? 'bg-gold/90 ring-2 ring-gold/40'
+          : 'bg-ink/70 border border-white/15 group-active:bg-ink/90'
       }`}>
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[13px] font-medium tracking-wide">{peak.name}</span>
-          <span className="text-[10px] text-sand-200 tabular-nums">
-            {distanceKm.toFixed(distanceKm < 10 ? 1 : 0)} km
-          </span>
+        <div className="flex items-baseline justify-center gap-1.5">
+          <span className="text-xs font-semibold tracking-wide">{peak.name}</span>
+          <span className="text-[10px] text-mist/70 tabular-nums">{peak.elevation}m</span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-2 text-[10px] text-white/75">
-          <span>海拔 <span className="text-white tabular-nums">{peak.elevation} m</span></span>
-          <span>{azimuthCompass(bearingDeg)}</span>
-        </div>
-        {overlay && (
-          <div className="mt-0.5 text-[9px] text-white/55 tabular-nums">
-            方位 {Math.round(bearingDeg)}° · 相对 {overlay.relativeDeg > 0 ? '+' : ''}{Math.round(overlay.relativeDeg)}°
-          </div>
-        )}
         {/* 指示三角 */}
-        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 border-r border-b ${
-          highlight ? 'bg-sand-500/90 border-sand-300' : 'bg-forest-900/80 border-white/15'
+        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rotate-45 ${
+          highlight ? 'bg-gold/90' : 'bg-ink/70 border-r border-b border-white/15'
         }`} />
       </div>
     </button>
