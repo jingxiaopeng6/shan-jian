@@ -23,7 +23,7 @@ export default function ViewshedProfileView({ samples, obstructionDistance }: Pr
   if (!samples || samples.length === 0) {
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
-        <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="#999">
+        <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="#A9ADA5">
           无剖面数据
         </text>
       </svg>
@@ -68,18 +68,18 @@ export default function ViewshedProfileView({ samples, obstructionDistance }: Pr
           y1={PAD.t + plotH * (1 - t)}
           x2={PAD.l + plotW}
           y2={PAD.t + plotH * (1 - t)}
-          stroke="#e1ebe5"
+          stroke="rgba(255,255,255,0.06)"
           strokeWidth={1}
         />
       ))}
       {/* 坐标轴 */}
-      <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + plotH} stroke="#c3d6cb" />
-      <line x1={PAD.l} y1={PAD.t + plotH} x2={PAD.l + plotW} y2={PAD.t + plotH} stroke="#c3d6cb" />
+      <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + plotH} stroke="rgba(169,173,165,0.3)" />
+      <line x1={PAD.l} y1={PAD.t + plotH} x2={PAD.l + plotW} y2={PAD.t + plotH} stroke="rgba(169,173,165,0.3)" />
       {/* 轴标签 */}
-      <text x={PAD.l - 4} y={PAD.t + 4} textAnchor="end" fontSize="9" fill="#5f4f3f">{Math.round(maxE)}m</text>
-      <text x={PAD.l - 4} y={PAD.t + plotH + 3} textAnchor="end" fontSize="9" fill="#5f4f3f">{Math.round(minE)}m</text>
-      <text x={PAD.l} y={H - 6} textAnchor="start" fontSize="9" fill="#5f4f3f">0 m</text>
-      <text x={PAD.l + plotW} y={H - 6} textAnchor="end" fontSize="9" fill="#5f4f3f">{maxD > 1000 ? `${(maxD / 1000).toFixed(1)} km` : `${Math.round(maxD)} m`}</text>
+      <text x={PAD.l - 4} y={PAD.t + 4} textAnchor="end" fontSize="9" fill="#A9ADA5">{Math.round(maxE)}m</text>
+      <text x={PAD.l - 4} y={PAD.t + plotH + 3} textAnchor="end" fontSize="9" fill="#A9ADA5">{Math.round(minE)}m</text>
+      <text x={PAD.l} y={H - 6} textAnchor="start" fontSize="9" fill="#A9ADA5">0 m</text>
+      <text x={PAD.l + plotW} y={H - 6} textAnchor="end" fontSize="9" fill="#A9ADA5">{maxD > 1000 ? `${(maxD / 1000).toFixed(1)} km` : `${Math.round(maxD)} m`}</text>
 
       {/* 遮挡点垂直辅助线 */}
       {obstructionX != null && (
@@ -88,7 +88,7 @@ export default function ViewshedProfileView({ samples, obstructionDistance }: Pr
           y1={PAD.t}
           x2={obstructionX}
           y2={PAD.t + plotH}
-          stroke="#e55"
+          stroke="#ef4444"
           strokeWidth={1}
           strokeDasharray="2 3"
           opacity={0.5}
@@ -96,11 +96,11 @@ export default function ViewshedProfileView({ samples, obstructionDistance }: Pr
       )}
 
       {/* 地形填充 */}
-      <path d={terrainFill} fill="#e6d2a9" opacity={0.85} />
-      <path d={terrainPath} fill="none" stroke="#c49851" strokeWidth={1.5} />
+      <path d={terrainFill} fill="#D7A85C" opacity={0.25} />
+      <path d={terrainPath} fill="none" stroke="#D7A85C" strokeWidth={1.5} opacity={0.8} />
 
       {/* 视线 */}
-      <path d={losPath} fill="none" stroke="#325043" strokeWidth={1.8} strokeDasharray="4 2" />
+      <path d={losPath} fill="none" stroke="#8DAA91" strokeWidth={1.8} strokeDasharray="4 2" />
 
       {/* 遮挡点 */}
       {blockedSamples.map((s, i) => (
@@ -109,19 +109,19 @@ export default function ViewshedProfileView({ samples, obstructionDistance }: Pr
           cx={xAt(s.distance)}
           cy={yAt(s.terrainElevation)}
           r={3.5}
-          fill="#e55"
-          stroke="#fff"
+          fill="#ef4444"
+          stroke="#F4F1E8"
           strokeWidth={1}
         />
       ))}
 
       {/* 观察者标记 */}
-      <circle cx={xAt(0)} cy={yAt(samples[0].terrainElevation)} r={4} fill="#325043" stroke="#fff" strokeWidth={1.5} />
-      <text x={xAt(0) + 8} y={yAt(samples[0].terrainElevation) - 6} fontSize="9" fill="#325043" fontWeight="600">游客</text>
+      <circle cx={xAt(0)} cy={yAt(samples[0].terrainElevation)} r={4} fill="#8DAA91" stroke="#F4F1E8" strokeWidth={1.5} />
+      <text x={xAt(0) + 8} y={yAt(samples[0].terrainElevation) - 6} fontSize="9" fill="#8DAA91" fontWeight="600">游客</text>
 
       {/* 目标标记 */}
-      <circle cx={xAt(maxD)} cy={yAt(samples[samples.length - 1].terrainElevation)} r={4} fill="#8b6f47" stroke="#fff" strokeWidth={1.5} />
-      <text x={xAt(maxD) - 8} y={yAt(samples[samples.length - 1].terrainElevation) - 6} textAnchor="end" fontSize="9" fill="#8b6f47" fontWeight="600">山峰</text>
+      <circle cx={xAt(maxD)} cy={yAt(samples[samples.length - 1].terrainElevation)} r={4} fill="#D7A85C" stroke="#F4F1E8" strokeWidth={1.5} />
+      <text x={xAt(maxD) - 8} y={yAt(samples[samples.length - 1].terrainElevation) - 6} textAnchor="end" fontSize="9" fill="#D7A85C" fontWeight="600">山峰</text>
     </svg>
   )
 }
