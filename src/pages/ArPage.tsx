@@ -78,7 +78,7 @@ export default function ArPage() {
       try {
         // 尝试用 DEM Provider
         if (!demProviderRef.current) {
-          demProviderRef.current = new DEMTerrainProvider('/dem-wugongshan.tif')
+          demProviderRef.current = new DEMTerrainProvider(`${import.meta.env.BASE_URL}dem-wugongshan.tif`)
         }
         const dem = demProviderRef.current
         if (!dem.isReady) await dem.load()

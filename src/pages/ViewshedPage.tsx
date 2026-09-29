@@ -13,8 +13,8 @@ import type { GeoPoint } from '../gis/TerrainProvider'
 /** 观察者人眼高度（米） */
 const OBSERVER_EYE_HEIGHT = 1.6
 
-/** DEM 文件 URL（放在 public/ 下，Vite 自动 serve） */
-const DEM_URL = '/dem-wugongshan.tif'
+/** DEM 文件 URL（放在 public/ 下，Vite 自动 serve；BASE_URL 适配 GitHub Pages 子路径） */
+const DEM_URL = `${import.meta.env.BASE_URL}dem-wugongshan.tif`
 
 export default function ViewshedPage() {
   const [searchParams] = useSearchParams()

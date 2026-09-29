@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:host": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
+    "postbuild": "node scripts/move-cesium.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"

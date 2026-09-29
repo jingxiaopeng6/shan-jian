@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createHashRouter, Navigate } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import MapPage from './pages/MapPage'
 import ArPage from './pages/ArPage'
@@ -8,7 +8,9 @@ import NfcPage from './pages/NfcPage'
 import JourneyPage from './pages/JourneyPage'
 import AppLayout from './components/AppLayout'
 
-export const router = createBrowserRouter([
+// 使用 HashRouter：GitHub Pages 静态托管不支持 history 路由的服务端重写，
+// Hash 路由天然规避刷新 / 深链 404 问题，且对 Link/useNavigate/peak/:id 无影响
+export const router = createHashRouter([
   {
     path: '/',
     element: <AppLayout />,

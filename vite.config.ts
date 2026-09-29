@@ -11,6 +11,9 @@ const hasCerts = fs.existsSync(path.join(certsDir, 'cert.pem')) &&
   fs.existsSync(path.join(certsDir, 'key.pem'))
 
 export default defineConfig({
+  // GitHub Pages project site：资源前缀需带仓库名
+  // vite-plugin-cesium 会据此自动拼接 Cesium 资源路径
+  base: '/shan-jian/',
   plugins: [react(), cesium()],
   server: {
     host: '0.0.0.0',

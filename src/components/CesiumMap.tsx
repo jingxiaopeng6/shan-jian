@@ -59,7 +59,7 @@ export default function CesiumMap({ userPosition, route, onPeakSelect, trackPoin
     viewerRef.current = viewer
 
     // 加载真实 DEM 地形
-    const demProvider = new DEMTerrainProvider('/dem-wugongshan.tif')
+    const demProvider = new DEMTerrainProvider(`${import.meta.env.BASE_URL}dem-wugongshan.tif`)
     const geoTiffTerrain = new GeoTiffTerrainProvider(demProvider)
     geoTiffTerrain.readyPromise.then(() => {
       viewer.terrainProvider = geoTiffTerrain
