@@ -13,6 +13,8 @@ interface CesiumMapProps {
   userPosition?: { lat: number; lng: number } | null
   /** 路线起点和终点，为 null 时不显示路线 */
   route?: { from: { lat: number; lng: number }; to: { lat: number; lng: number } } | null
+  /** 点击山峰时的回调（未提供时默认跳转 /peak/:id） */
+  onPeakSelect?: (peakId: string) => void
 }
 
 /**
@@ -23,7 +25,7 @@ interface CesiumMapProps {
  * - 支持基础路线绘制（MVP 示意直线）
  * - 移动端优化：降低渲染精度、支持触摸手势、减小标注尺寸
  */
-export default function CesiumMap({ userPosition, route }: CesiumMapProps) {
+export default function CesiumMap({ userPosition, route, onPeakSelect }: CesiumMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<Cesium.Viewer | null>(null)
   const userEntityRef = useRef<Cesium.Entity | null>(null)
@@ -184,14 +186,15 @@ export default function CesiumMap({ userPosition, route }: CesiumMapProps) {
       }
     })
 
-    // 点击山峰跳详情
+    // 点击山峰：有回调则回调，否则默认跳转详情页
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
     handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
       const picked = viewer.scene.pick(click.position)
       if (Cesium.defined(picked) && Cesium.defined(picked.id)) {
         const entity = picked.id as Cesium.Entity & { peakId?: string }
         if (entity.peakId) {
-          navigate(`/peak/${entity.peakId}`)
+          if (onPeakSelect) onPeakSelect(entity.peakId)
+          else navigate(`/peak/${entity.peakId}`)
         }
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
@@ -203,7 +206,7 @@ export default function CesiumMap({ userPosition, route }: CesiumMapProps) {
       userEntityRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, isMobile])
+  }, [navigate, isMobile, onPeakSelect])
 
   // 监听用户位置变化，更新标注
   useEffect(() => {

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { defaultUserPosition, getPeakById, getVisiblePeaks } from '../data/mock'
 import ArPeakBadge, { type HeadingKey } from '../components/ArPeakBadge'
 import CameraView from '../components/CameraView'
@@ -10,14 +10,27 @@ import { useOrientationProvider } from '../hooks/useOrientationProvider'
 import { useArPeakOverlay } from '../hooks/useArPeakOverlay'
 import { useIsMobile } from '../hooks/useIsMobile'
 import type { Peak } from '../types'
+import { analyzeLineOfSight, formatDistanceM, type ViewshedResult } from '../gis/viewshedService'
+import { DEMTerrainProvider } from '../gis/DEMTerrainProvider'
+import type { GeoPoint, TerrainProvider } from '../gis/TerrainProvider'
+import { createTerrainProvider } from '../data/mockTerrain'
 
 type ArMode = 'simulated' | 'camera'
 
+/** 观察者人眼高度 */
+const OBSERVER_EYE_HEIGHT = 1.6
+
 export default function ArPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const highlightPeakId = searchParams.get('peakId')
   const isMobile = useIsMobile()
   const [mode, setMode] = useState<ArMode>('simulated')
   const [heading, setHeading] = useState<HeadingKey>('E')
+  const [selectedPeakId, setSelectedPeakId] = useState<string | null>(highlightPeakId)
+  const [viewshedResult, setViewshedResult] = useState<ViewshedResult | null>(null)
+  const [viewshedLoading, setViewshedLoading] = useState(false)
+  const demProviderRef = useRef<DEMTerrainProvider | null>(null)
 
   const headingDegMap: Record<HeadingKey, number> = {
     N: 0, E: 90, S: 180, W: 270, SW: 225
@@ -46,6 +59,56 @@ export default function ArPage() {
     peaks: overlayPeaks === 'real' ? undefined : overlayPeaks
   })
   const hasRealAR = location.latLng != null && orientation.heading != null && overlay.items.length > 0
+
+  // 内联视域分析：点击「为什么能看到？」时调用
+  const handleViewshed = (peakId: string) => {
+    const peak = getPeakById(peakId)
+    if (!peak) return
+    setViewshedLoading(true)
+    setViewshedResult(null)
+
+    // 获取观察者位置（真实 GPS 或默认位置）
+    const obsLat = location.latLng?.lat ?? defaultUserPosition.lat
+    const obsLng = location.latLng?.lng ?? defaultUserPosition.lng
+
+    // 延迟执行以显示 loading 状态
+    setTimeout(async () => {
+      try {
+        // 尝试用 DEM Provider
+        if (!demProviderRef.current) {
+          demProviderRef.current = new DEMTerrainProvider('/dem-wugongshan.tif')
+        }
+        const dem = demProviderRef.current
+        if (!dem.isReady) await dem.load()
+
+        const groundElev = dem.getElevation(obsLat, obsLng) ?? defaultUserPosition.elevation
+        const observer: GeoPoint = {
+          lat: obsLat,
+          lng: obsLng,
+          elevation: groundElev + OBSERVER_EYE_HEIGHT
+        }
+        const target: GeoPoint = {
+          lat: peak.lat,
+          lng: peak.lng,
+          elevation: peak.elevation
+        }
+        const provider: TerrainProvider = dem.isReady ? dem : createTerrainProvider([])
+        const result = analyzeLineOfSight(observer, target, provider, dem.isReady ? 200 : 60)
+        setViewshedResult(result)
+      } catch {
+        // DEM 失败时回退到 mock
+        const observer: GeoPoint = {
+          lat: obsLat,
+          lng: obsLng,
+          elevation: defaultUserPosition.elevation + OBSERVER_EYE_HEIGHT
+        }
+        const target: GeoPoint = { lat: peak.lat, lng: peak.lng, elevation: peak.elevation }
+        const result = analyzeLineOfSight(observer, target, createTerrainProvider([]), 60)
+        setViewshedResult(result)
+      }
+      setViewshedLoading(false)
+    }, 50)
+  }
 
   // 离开页面时清理所有资源
   useEffect(() => {
@@ -113,7 +176,8 @@ export default function ArPage() {
                         <ArPeakBadge
                           peak={item.peak}
                           overlay={item}
-                          onClick={() => navigate(`/peak/${item.peak.id}`)}
+                          highlight={selectedPeakId === item.peak.id || highlightPeakId === item.peak.id}
+                          onClick={() => { setSelectedPeakId(item.peak.id); setViewshedResult(null) }}
                         />
                       </div>
                     ))
@@ -131,13 +195,65 @@ export default function ArPage() {
                           <ArPeakBadge
                             peak={peak}
                             visiblePeak={v}
+                            highlight={selectedPeakId === v.peakId || highlightPeakId === v.peakId}
                             style={{ left: `${leftPct}%`, top: `${verticalPct}%` }}
-                            onClick={() => navigate(`/peak/${v.peakId}`)}
+                            onClick={() => { setSelectedPeakId(v.peakId); setViewshedResult(null) }}
                           />
                         </div>
                       )
                     })}
               </div>
+
+              {/* AR 山峰信息卡（点击 badge 后弹出） */}
+              {selectedPeakId && (hasRealAR || visible.some(v => v.peakId === selectedPeakId)) && (() => {
+                const peak = getPeakById(selectedPeakId)
+                if (!peak) return null
+                const overlayItem = overlay.items.find(i => i.peak.id === selectedPeakId)
+                const visiblePeak = visible.find(v => v.peakId === selectedPeakId)
+                const distKm = overlayItem ? overlayItem.distanceKm : visiblePeak?.distanceKm ?? 0
+                const bearingDeg = overlayItem ? overlayItem.bearingDeg : visiblePeak?.azimuthDeg ?? 0
+                return (
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-20 z-30 w-[90%] max-w-sm rounded-xl bg-white/95 backdrop-blur border border-forest-200 shadow-soft p-3 pointer-events-auto">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-serif text-forest-900 text-base font-semibold">{peak.name}</span>
+                        <span className="ml-2 text-xs text-sand-600">{peak.elevation} m · {distKm.toFixed(1)} km · {azimuthCompassShort(bearingDeg)}</span>
+                      </div>
+                      <button onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }} className="text-stone2-400 hover:text-red-500 text-sm">✕</button>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => handleViewshed(selectedPeakId)}
+                        disabled={viewshedLoading}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-forest-700 text-white text-xs font-medium hover:bg-forest-800 disabled:opacity-60 transition"
+                      >
+                        {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '为什么能看到？'}
+                      </button>
+                      <button
+                        onClick={() => navigate(`/peak/${selectedPeakId}`)}
+                        className="flex-1 inline-flex items-center justify-center h-8 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
+                      >查看详情</button>
+                    </div>
+                    {/* 内联视域分析结果 */}
+                    {viewshedResult && (
+                      <div className={`mt-2 pt-2 border-t border-forest-100 text-xs ${viewshedResult.visible ? 'text-forest-700' : 'text-red-600'}`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-2 h-2 rounded-full ${viewshedResult.visible ? 'bg-forest-600' : 'bg-red-500'} animate-pulse`} />
+                          {viewshedResult.visible ? '🟢 可见：无地形遮挡' : '🔴 不可见：被地形遮挡'}
+                        </div>
+                        <div className="mt-1 text-[11px] text-stone2-500">
+                          距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m · 方位 {Math.round(viewshedResult.bearing)}°
+                        </div>
+                        {viewshedResult.obstruction && (
+                          <div className="mt-1 text-[11px] text-red-500 leading-4">
+                            在 {formatDistanceM(viewshedResult.obstruction.distance)} 处，地形（{viewshedResult.obstruction.terrainElevation.toFixed(0)} m）超过视线（{viewshedResult.obstruction.lineOfSightElevation.toFixed(0)} m），超出 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               {/* 底部：视角切换按钮 + 关闭 */}
               <div className="absolute left-0 right-0 bottom-0 px-4 pt-3 pb-safe bg-gradient-to-t from-black/60 to-transparent">
@@ -236,11 +352,59 @@ export default function ArPage() {
                   key={v.peakId}
                   peak={peak}
                   visiblePeak={v}
+                  highlight={selectedPeakId === v.peakId || highlightPeakId === v.peakId}
                   style={{ left: `${leftPct}%`, top: `${verticalPct}%` }}
-                  onClick={() => navigate(`/peak/${v.peakId}`)}
+                  onClick={() => { setSelectedPeakId(v.peakId); setViewshedResult(null) }}
                 />
               )
             })}
+
+            {/* AR 山峰信息卡（模拟模式） */}
+            {selectedPeakId && visible.some(v => v.peakId === selectedPeakId) && (() => {
+              const peak = getPeakById(selectedPeakId)
+              if (!peak) return null
+              const vpeak = visible.find(v => v.peakId === selectedPeakId)!
+              return (
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-20 z-30 w-[90%] max-w-sm rounded-xl bg-white/95 backdrop-blur border border-forest-200 shadow-soft p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="font-serif text-forest-900 text-base font-semibold">{peak.name}</span>
+                      <span className="ml-2 text-xs text-sand-600">{peak.elevation} m · {vpeak.distanceKm.toFixed(1)} km · {azimuthCompassShort(vpeak.azimuthDeg)}</span>
+                    </div>
+                    <button onClick={() => { setSelectedPeakId(null); setViewshedResult(null) }} className="text-stone2-400 hover:text-red-500 text-sm">✕</button>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => handleViewshed(selectedPeakId)}
+                      disabled={viewshedLoading}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-forest-700 text-white text-xs font-medium hover:bg-forest-800 disabled:opacity-60 transition"
+                    >
+                      {viewshedLoading ? '分析中…' : viewshedResult ? '重新分析' : '为什么能看到？'}
+                    </button>
+                    <button
+                      onClick={() => navigate(`/peak/${selectedPeakId}`)}
+                      className="flex-1 inline-flex items-center justify-center h-8 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
+                    >查看详情</button>
+                  </div>
+                  {viewshedResult && (
+                    <div className={`mt-2 pt-2 border-t border-forest-100 text-xs ${viewshedResult.visible ? 'text-forest-700' : 'text-red-600'}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${viewshedResult.visible ? 'bg-forest-600' : 'bg-red-500'} animate-pulse`} />
+                        {viewshedResult.visible ? '🟢 可见：无地形遮挡' : '🔴 不可见：被地形遮挡'}
+                      </div>
+                      <div className="mt-1 text-[11px] text-stone2-500">
+                        距离 {formatDistanceM(viewshedResult.distance)} · 海拔差 {viewshedResult.elevationDifference > 0 ? '+' : ''}{viewshedResult.elevationDifference.toFixed(1)} m · 方位 {Math.round(viewshedResult.bearing)}°
+                      </div>
+                      {viewshedResult.obstruction && (
+                        <div className="mt-1 text-[11px] text-red-500 leading-4">
+                          在 {formatDistanceM(viewshedResult.obstruction.distance)} 处，地形超出视线 {viewshedResult.obstruction.exceedAmount.toFixed(1)} m
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             <div className="absolute left-0 right-0 bottom-0 h-14 px-4 flex items-center justify-between bg-gradient-to-t from-black/60 to-transparent">
               <span className="text-white/85 text-[11px]">
@@ -596,4 +760,10 @@ function rightAz(deg: number): string { if (deg >= 360) deg -= 360; return forma
 function formatDeg(deg: number): string {
   const d = ((deg % 360) + 360) % 360
   return `${Math.round(d)}°`
+}
+
+/** 方位角 → 简短方位文字 */
+function azimuthCompassShort(deg: number): string {
+  const idx = Math.round((((deg % 360) + 360) % 360) / 45) % 8
+  return ['北', '东北', '东', '东南', '南', '西南', '西', '西北'][idx] ?? '—'
 }

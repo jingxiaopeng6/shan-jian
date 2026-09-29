@@ -12,11 +12,13 @@ interface Props {
   overlay?: ArPeakOverlayItem
   /** 强制隐藏 */
   hidden?: boolean
+  /** 突出显示（从地图跳转过来时高亮） */
+  highlight?: boolean
   style?: CSSProperties
   onClick?: () => void
 }
 
-export default function ArPeakBadge({ peak, visiblePeak, overlay, hidden, style, onClick }: Props) {
+export default function ArPeakBadge({ peak, visiblePeak, overlay, hidden, highlight, style, onClick }: Props) {
   // 统一数据读取：overlay 优先
   const distanceKm = overlay ? overlay.distanceKm : visiblePeak?.distanceKm ?? 0
   const bearingDeg = overlay ? overlay.bearingDeg : visiblePeak?.azimuthDeg ?? 0
@@ -32,14 +34,18 @@ export default function ArPeakBadge({ peak, visiblePeak, overlay, hidden, style,
     <button
       type="button"
       onClick={onClick}
-      className="absolute -translate-x-1/2 -translate-y-full group"
+      className={`absolute -translate-x-1/2 -translate-y-full group ${highlight ? 'z-10' : ''}`}
       style={computedStyle}
       data-testid={`ar-badge-${peak.id}`}
       aria-label={`${peak.name} ${peak.elevation}米 距离${distanceKm.toFixed(1)}公里`}
     >
       {/* 连线指示 */}
       <div className="mx-auto mb-0.5 w-px h-5 bg-white/80" />
-      <div className="relative min-w-[110px] max-w-[180px] rounded-lg bg-forest-900/80 backdrop-blur border border-white/15 px-2.5 py-1.5 text-left text-white shadow-soft group-hover:bg-forest-800/90 transition">
+      <div className={`relative min-w-[110px] max-w-[180px] rounded-lg backdrop-blur px-2.5 py-1.5 text-left text-white shadow-soft transition ${
+        highlight
+          ? 'bg-sand-500/90 border-2 border-sand-300 ring-2 ring-sand-300/50 animate-pulse'
+          : 'bg-forest-900/80 border border-white/15 group-hover:bg-forest-800/90'
+      }`}>
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-[13px] font-medium tracking-wide">{peak.name}</span>
           <span className="text-[10px] text-sand-200 tabular-nums">
@@ -56,7 +62,9 @@ export default function ArPeakBadge({ peak, visiblePeak, overlay, hidden, style,
           </div>
         )}
         {/* 指示三角 */}
-        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-forest-900/80 border-r border-b border-white/15" />
+        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 border-r border-b ${
+          highlight ? 'bg-sand-500/90 border-sand-300' : 'bg-forest-900/80 border-white/15'
+        }`} />
       </div>
     </button>
   )

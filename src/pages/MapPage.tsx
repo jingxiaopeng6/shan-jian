@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import PageContainer from '../components/PageContainer'
 import CesiumMap from '../components/CesiumMap'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { attractions } from '../data/attractions'
 import { calculateDistanceKm } from '../utils/geoUtils'
+import { getPeakById } from '../data/mock'
 
 export default function MapPage() {
   const geo = useGeolocation()
+  const navigate = useNavigate()
   const [locating, setLocating] = useState(false)
   const [targetId, setTargetId] = useState<string>('')
+  const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null)
+
+  const selectedPeak = selectedPeakId ? getPeakById(selectedPeakId) : null
 
   const userPosition = geo.reading
     ? { lat: geo.reading.latitude, lng: geo.reading.longitude }
@@ -34,7 +39,11 @@ export default function MapPage() {
   return (
     <div className="relative">
       <div className="w-full relative h-[60vh] sm:h-[68vh]">
-        <CesiumMap userPosition={userPosition} route={route} />
+        <CesiumMap
+          userPosition={userPosition}
+          route={route}
+          onPeakSelect={(id) => setSelectedPeakId(id)}
+        />
 
         {/* 浮动工具栏 */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-xl flex gap-2 pointer-events-none">
@@ -84,6 +93,44 @@ export default function MapPage() {
         {geo.status === 'error' && geo.error && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 px-3 py-1.5 bg-amber-500/90 text-white text-xs rounded-full">
             {geo.error.message}
+          </div>
+        )}
+
+        {/* 山峰信息卡弹窗（点击地图山峰后显示） */}
+        {selectedPeak && (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-3 z-30 w-[92%] max-w-md rounded-xl bg-white/95 backdrop-blur border border-forest-200 shadow-soft p-4 pointer-events-auto">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-serif text-forest-900 text-lg font-semibold">{selectedPeak.name}</div>
+                <div className="text-xs text-sand-600 mt-0.5">{selectedPeak.pinyin} · {selectedPeak.elevation} m</div>
+              </div>
+              <button
+                onClick={() => setSelectedPeakId(null)}
+                className="text-stone2-400 hover:text-red-500 text-sm leading-none"
+              >✕</button>
+            </div>
+            <p className="mt-2 text-xs text-stone2-600 leading-5 line-clamp-2">{selectedPeak.description}</p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => navigate(`/ar?peakId=${selectedPeak.id}`)}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg bg-forest-700 text-white text-xs font-medium hover:bg-forest-800 transition"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="12" cy="13" r="3"/></svg>
+                进入 AR 看山
+              </button>
+              <button
+                onClick={() => navigate(`/peak/${selectedPeak.id}`)}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
+              >
+                查看详情
+              </button>
+              <button
+                onClick={() => navigate(`/viewshed?peakId=${selectedPeak.id}`)}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-forest-200 bg-white text-forest-800 text-xs font-medium hover:bg-forest-50 transition"
+              >
+                视域分析
+              </button>
+            </div>
           </div>
         )}
 
